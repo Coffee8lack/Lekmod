@@ -227394,7 +227394,7 @@
 			<Description>TXT_KEY_TRAIT_VATICAN</Description> 
 			<ShortDescription>TXT_KEY_TRAIT_VATICAN_SHORT</ShortDescription> 
 			<NumExtraLeagueVotes>0</NumExtraLeagueVotes>
-			<FaithFromKills>100</FaithfromKills>
+			<FaithFromKills>100</FaithFromKills>
 			<!-- Trait_ImprovementYieldChanges -->
 			<!-- Has code in Lua\Civilziations\Lekmod_vatican.lua -->
 		</Row>
