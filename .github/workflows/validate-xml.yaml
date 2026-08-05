@@ -1,0 +1,10 @@
+name: Validate XML
+on: [push]
+jobs:
+  validate-xml:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v7
+      - run: apt install xmllint
+      - run: ./scripts/validate-xml.sh
