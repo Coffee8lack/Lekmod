@@ -7,4 +7,4 @@ jobs:
       - name: Checkout source
         uses: actions/checkout@v7
       - run: sudo apt-get install libxml2-utils
-      - run: ./scripts/validate-xml.sh
+      - run: bash ./scripts/validate-xml.sh
