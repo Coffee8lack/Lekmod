@@ -6,5 +6,5 @@ jobs:
     steps:
       - name: Checkout source
         uses: actions/checkout@v7
-      - run: apt install xmllint
+      - run: sudo apt-get install xmllint
       - run: ./scripts/validate-xml.sh
