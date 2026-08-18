@@ -339,6 +339,9 @@ bool CvDllDatabaseUtility::PrefetchGameData()
 
 	//Misc
 	PrefetchCollection(GC.getRouteInfo(), "Routes");
+#if defined(LEKMOD_GREAT_WORK_YIELD_EFFECTS)
+	PrefetchCollection(GC.getGreatWorkClassInfo(), "GreatWorkClasses");
+#endif
 
 	CvNotificationXMLEntries* pkNotificationEntries =  GC.GetNotificationEntries();
 	if(pkNotificationEntries != NULL)
@@ -346,6 +349,9 @@ bool CvDllDatabaseUtility::PrefetchGameData()
 		PrefetchCollection(pkNotificationEntries->GetNotificationEntries(), "Notifications");
 	}
 
+#if defined(TRADE_REFACTOR)
+	PrefetchCollection(GC.getTradeConnectionInfo(), "TradeConnections");
+#endif
 	//Technologies
 	PrefetchCollection(GC.getTechInfo(), "Technologies");
 
@@ -373,6 +379,9 @@ bool CvDllDatabaseUtility::PrefetchGameData()
 	//Civilizations - must be after buildings and units
 	PrefetchCollection(GC.getCivilizationInfo(), "Civilizations");
 	PrefetchCollection(GC.getMinorCivInfo(), "MinorCivilizations");
+#ifdef LEKMOD_MINOR_CIV_PERSONALITIES
+	PrefetchCollection(GC.getMinorCivPersonalityInfo(), "Minor_Civ_Personalities");
+#endif
 	PrefetchCollection(GC.getTraitInfo(), "Traits");
 	PrefetchCollection(GC.getReligionInfo(), "Religions");
 	PrefetchCollection(GC.getBeliefInfo(), "Beliefs");
@@ -615,12 +624,18 @@ bool CvDllDatabaseUtility::ValidatePrefetchProcess()
 	ValidateVectorSize(getNumFeatureInfos);
 	ValidateVectorSize(getNumCivilizationInfos);
 	ValidateVectorSize(getNumMinorCivInfos);
+#ifdef LEKMOD_MINOR_CIV_PERSONALITIES
+	ValidateVectorSize(getNumMinorCivPersonalityInfos);
+#endif
 	ValidateVectorSize(getNumLeaderHeadInfos);
 	ValidateVectorSize(getNumTraitInfos);
 	ValidateVectorSize(getNumUnitInfos);
 	ValidateVectorSize(getNumSpecialUnitInfos);
 	ValidateVectorSize(getNumVoteSourceInfos);
 	ValidateVectorSize(getNumUnitCombatClassInfos);
+#if defined(TRADE_REFACTOR)
+	ValidateVectorSize(getNumTradeConnectionInfos);
+#endif
 
 	ValidateCount(gc.getUnitAIInfo().size);
 
@@ -632,6 +647,9 @@ bool CvDllDatabaseUtility::ValidatePrefetchProcess()
 	ValidateCount(gc.getYieldInfo().size);
 
 	ValidateVectorSize(getNumRouteInfos);
+#if defined(LEKMOD_GREAT_WORK_YIELD_EFFECTS)
+	ValidateVectorSize(getNumGreatWorkClassInfos);
+#endif
 	ValidateVectorSize(getNumImprovementInfos);
 	ValidateVectorSize(getNumBuildInfos);
 	ValidateVectorSize(getNumHandicapInfos);

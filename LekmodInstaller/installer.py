@@ -651,7 +651,7 @@ class LekmodInstaller:
             
             # Store versions data for later use
             self.versions_data = versions
-            
+
             # Format version list with dates and sizes
             version_display = []
             for v in versions:

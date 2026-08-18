@@ -1,5 +1,5 @@
 /*	-------------------------------------------------------------------------------------------------------
-	© 1991-2012 Take-Two Interactive Software and its subsidiaries.  Developed by Firaxis Games.  
+	ï¿½ 1991-2012 Take-Two Interactive Software and its subsidiaries.  Developed by Firaxis Games.  
 	Sid Meier's Civilization V, Civ, Civilization, 2K Games, Firaxis Games, Take-Two Interactive Software 
 	and their respective logos are all trademarks of Take-Two interactive Software, Inc.  
 	All other marks and trademarks are the property of their respective owners.  
@@ -216,7 +216,12 @@ public:
 	int getExperience() const;
 
 	bool isVisible() const;
-
+#if defined(LEKMOD_GREAT_WORK_YIELD_EFFECTS)
+	const char* getIconString() const;
+	void setIconString(const char* szVal);
+	const char* getGreatPersonIconString() const;
+	void setGreatPersonIconString(const char* szVal);
+#endif
 	// Arrays
 	int getYieldChange(int i) const;
 	const int* getYieldChangeArray() const;
@@ -237,7 +242,10 @@ protected:
 	int m_iExperience;
 
 	bool m_bVisible;
-
+#if defined(LEKMOD_GREAT_WORK_YIELD_EFFECTS)
+	CvString m_szIconString;
+	CvString m_szGreatPersonIconString;
+#endif
 	CvString m_strTexture;
 
 	// Arrays
@@ -1115,6 +1123,9 @@ public:
 	bool isKill() const;
 	bool isRepair() const;
 	bool IsRemoveRoute() const;
+#if defined(LEKMOD_WATER_WALK_IMPROVEMENT_RULES)
+	bool IsRemoveWaterCrossing() const;
+#endif
 #ifdef LEKMOD_BUILD_CIV_REQ
 	//EAP Civ req builds
 	bool IsSpecificCivRequired() const;
@@ -1154,6 +1165,9 @@ protected:
 	bool m_bKill;
 	bool m_bRepair;
 	bool m_bRemoveRoute;
+#if defined(LEKMOD_WATER_WALK_IMPROVEMENT_RULES)
+	bool m_bRemoveWaterCrossing;
+#endif
 	//EAP civ req builds
 	bool m_bSpecificCivRequired;
 
@@ -1342,7 +1356,50 @@ private:
 	CvRouteInfo(const CvRouteInfo&);
 	CvRouteInfo& operator=(const CvRouteInfo&);
 };
+#if defined(TRADE_REFACTOR)
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+//  class : CvTradeConnectionInfo
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+class CvTradeConnectionInfo :	public CvBaseInfo
+{
+	public:
+	CvTradeConnectionInfo();
+	virtual ~CvTradeConnectionInfo();
 
+	int getBaseOriginValue(YieldTypes eYield) const { return m_piBaseOriginValue ? m_piBaseOriginValue[eYield] : -1; }
+	int getBaseDestinationValue(YieldTypes eYield) const { return m_piBaseDestinationValue ? m_piBaseDestinationValue[eYield] : -1; }
+	int getEraOriginBonus(EraTypes eEra, YieldTypes eYield) const { return m_ppiiEraOriginBonus ? m_ppiiEraOriginBonus[eEra][eYield] : -1; }
+	int getEraDestinationBonus(EraTypes eEra, YieldTypes eYield) const { return m_ppiiEraDestinationBonus ? m_ppiiEraDestinationBonus[eEra][eYield] : -1; }
+	int getDomainYieldModifier(DomainTypes eDomain, YieldTypes eYield) const { return m_ppiiDomainYieldModifier ? m_ppiiDomainYieldModifier[eDomain][eYield] : -1; }
+
+	virtual bool CacheResults(Database::Results& kResults, CvDatabaseUtility& kUtility);
+protected:
+	int* m_piBaseOriginValue;
+	int* m_piBaseDestinationValue;
+	int** m_ppiiEraOriginBonus;
+	int** m_ppiiEraDestinationBonus;
+	int** m_ppiiDomainYieldModifier;
+};
+#endif
+#if defined(LEKMOD_GREAT_WORK_YIELD_EFFECTS)
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+//  class : CvGreatWorkClassInfo
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+class CvGreatWorkClassInfo : public CvBaseInfo
+{
+public:
+	CvGreatWorkClassInfo();
+	virtual ~CvGreatWorkClassInfo();
+#if !defined(LEK_YIELD_TOURISM)
+	int getBaseTourism() const;
+#endif
+	int getGreatWorkClassBaseYield(int i) const;
+	virtual bool CacheResults(Database::Results& kResults, CvDatabaseUtility& kUtility);
+protected:
+	int m_iBaseTourism;
+	int* m_piBaseYield;
+};
+#endif
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //  class : CvResourceClassInfo
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -1438,7 +1495,10 @@ public:
 #endif
 
 	int getResourceQuantityType(int i) const;
-
+#if defined(TRADE_REFACTOR)
+	int getTradeConnectionResourceLandYieldBonusTimes100(int i, int j) const;
+	int getTradeConnectionResourceSeaYieldBonusTimes100(int i, int j) const;
+#endif
 	bool isTerrain(int i) const;
 	bool isFeature(int i) const;
 	bool isFeatureTerrain(int i) const;
@@ -1503,7 +1563,10 @@ protected:
 	int* m_piResourceQuantityTypes;
 	int* m_piImprovementChange;
 	int* m_piFlavor;
-
+#if defined(TRADE_REFACTOR)
+	int** m_paiTradeConnectionResourceLandYieldBonus;
+	int** m_paiTradeConnectionResourceSeaYieldBonus;
+#endif
 	bool* m_pbTerrain;
 	bool* m_pbFeature;
 	bool* m_pbFeatureTerrain;
@@ -1552,6 +1615,10 @@ public:
 	bool isNukeImmune() const;
 	bool IsRough() const;
 	bool IsNaturalWonder() const;
+#if defined(LEKMOD_WATER_WALK_IMPROVEMENT_RULES)
+	bool IsAllowsWalkWater() const;
+	int GetStackedDomainDefensePenalty() const;
+#endif
 
 	const char* getArtDefineTag() const;
 	void setArtDefineTag(const char* szTag);
@@ -1611,6 +1678,10 @@ protected:
 	bool m_bNukeImmune;
 	bool m_bRough;
 	bool m_bNaturalWonder;
+#if defined(LEKMOD_WATER_WALK_IMPROVEMENT_RULES)
+	bool m_bAllowsWalkWater;
+	int m_iStackedDomainDefensePenalty;
+#endif
 
 	// Set each time the game is started
 	bool m_bClearable;
@@ -1669,6 +1740,9 @@ public:
 #endif
 	int getAIWeightPercent() const;
 
+	CvString getIconString() const;
+	void setIconString(const char* szVal);
+
 	virtual bool CacheResults(Database::Results& kResults, CvDatabaseUtility& kUtility);
 
 protected:
@@ -1692,6 +1766,8 @@ protected:
 	int m_iPuppetYieldMod;
 #endif
 	int m_iAIWeightPercent;
+
+	CvString m_strIconString;
 };
 
 

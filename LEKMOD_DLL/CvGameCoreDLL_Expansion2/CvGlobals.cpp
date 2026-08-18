@@ -2829,7 +2829,25 @@ CvTerrainInfo* CvGlobals::getTerrainInfo(TerrainTypes eTerrainNum)
 	else
 		return NULL;
 }
-
+#if defined(LEKMOD_GREAT_WORK_YIELD_EFFECTS)
+int CvGlobals::getNumGreatWorkClassInfos()
+{
+	return (int)m_paGreatWorkClassInfo.size();
+}
+std::vector<CvGreatWorkClassInfo*>& CvGlobals::getGreatWorkClassInfo()
+{
+	return m_paGreatWorkClassInfo;
+}
+CvGreatWorkClassInfo* CvGlobals::getGreatWorkClassInfo(GreatWorkClass eGreatWorkClassNum)
+{
+	CvAssert(eGreatWorkClassNum > -1);
+	CvAssert(eGreatWorkClassNum < GC.getNumGreatWorkClassInfos());
+	if(eGreatWorkClassNum > -1 && eGreatWorkClassNum < (int)m_paGreatWorkClassInfo.size())
+		return m_paGreatWorkClassInfo[eGreatWorkClassNum];
+	else
+		return NULL;
+}
+#endif
 #ifdef AUI_WARNING_FIXES
 uint CvGlobals::getNumResourceClassInfos() const
 {
@@ -3019,6 +3037,34 @@ CvMinorCivInfo* CvGlobals::getMinorCivInfo(MinorCivTypes eMinorCivNum)
 		return NULL;
 }
 
+#ifdef LEKMOD_MINOR_CIV_PERSONALITIES
+#ifdef AUI_WARNING_FIXES
+uint CvGlobals::getNumMinorCivPersonalityInfos() const
+{
+	return m_paMinorCivPersonalityInfo.size();
+}
+#else
+int CvGlobals::getNumMinorCivPersonalityInfos()
+{
+	return (int)m_paMinorCivPersonalityInfo.size();
+}
+#endif
+
+std::vector<CvMinorCivPersonalityInfo*>& CvGlobals::getMinorCivPersonalityInfo()
+{
+	return m_paMinorCivPersonalityInfo;
+}
+
+CvMinorCivPersonalityInfo* CvGlobals::getMinorCivPersonalityInfo(int ePersonality)
+{
+	CvAssert(ePersonality > -1);
+	CvAssert(ePersonality < (int)m_paMinorCivPersonalityInfo.size());
+	if(ePersonality > -1 && ePersonality < (int)m_paMinorCivPersonalityInfo.size())
+		return m_paMinorCivPersonalityInfo[ePersonality];
+	return NULL;
+}
+#endif
+
 #ifdef AUI_WARNING_FIXES
 uint CvGlobals::getNumLeaderHeadInfos() const
 {
@@ -3193,7 +3239,25 @@ CvBaseInfo* CvGlobals::getUnitCombatClassInfo(UnitCombatTypes e)
 	else
 		return NULL;
 }
-
+#if defined(TRADE_REFACTOR)
+int CvGlobals::getNumTradeConnectionInfos()
+{
+	return (int)m_paTradeConnectionInfo.size();
+}
+std::vector<CvTradeConnectionInfo*>& CvGlobals::getTradeConnectionInfo()
+{
+	return m_paTradeConnectionInfo;
+}
+CvTradeConnectionInfo* CvGlobals::getTradeConnectionInfo(TradeConnectionType e)
+{
+	CvAssert(e > -1);
+	CvAssert(e < NUM_TRADE_CONNECTION_TYPES);
+	if(e > -1 && e < (int)m_paTradeConnectionInfo.size())
+		return m_paTradeConnectionInfo[e];
+	else
+		return NULL;
+}
+#endif
 std::vector<CvBaseInfo*>& CvGlobals::getUnitAIInfo()
 {
 	return m_paUnitAIInfos;
@@ -7023,6 +7087,9 @@ void CvGlobals::deleteInfoArrays()
 	deleteInfoArray(m_paLeaderHeadInfo);
 	deleteInfoArray(m_paCivilizationInfo);
 	deleteInfoArray(m_paMinorCivInfo);
+#ifdef LEKMOD_MINOR_CIV_PERSONALITIES
+	deleteInfoArray(m_paMinorCivPersonalityInfo);
+#endif
 
 	deleteInfoArray(m_paVoteSourceInfo);
 	deleteInfoArray(m_paHandicapInfo);
@@ -7039,7 +7106,9 @@ void CvGlobals::deleteInfoArrays()
 	deleteInfoArray(m_paInterfaceModeInfo);
 
 	deleteInfoArray(m_paRouteInfo);
-
+#if defined(LEKMOD_GREAT_WORK_YIELD_EFFECTS)
+	deleteInfoArray(m_paGreatWorkClassInfo);
+#endif
 	deleteInfoArray(m_aEraInfo);
 
 	deleteInfoArray(m_paBuildInfo);
@@ -7062,6 +7131,9 @@ void CvGlobals::deleteInfoArrays()
 	deleteInfoArray(m_paTerrainInfo);
 	deleteInfoArray(m_paFeatureInfo);
 	deleteInfoArray(m_paResourceClassInfo);
+#if defined(TRADE_REFACTOR)
+	deleteInfoArray(m_paTradeConnectionInfo);
+#endif
 	deleteInfoArray(m_paResourceInfo);
 	deleteInfoArray(m_paUnitDomainInfo);
 

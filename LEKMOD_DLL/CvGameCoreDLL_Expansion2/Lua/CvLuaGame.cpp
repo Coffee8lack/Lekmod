@@ -1,5 +1,5 @@
 /*	-------------------------------------------------------------------------------------------------------
-	© 1991-2012 Take-Two Interactive Software and its subsidiaries.  Developed by Firaxis Games.  
+	ï¿½ 1991-2012 Take-Two Interactive Software and its subsidiaries.  Developed by Firaxis Games.  
 	Sid Meier's Civilization V, Civ, Civilization, 2K Games, Firaxis Games, Take-Two Interactive Software 
 	and their respective logos are all trademarks of Take-Two interactive Software, Inc.  
 	All other marks and trademarks are the property of their respective owners.  
@@ -254,6 +254,9 @@ void CvLuaGame::RegisterMembers(lua_State* L)
 	Method(GetReplayMessages);
 	Method(GetNumReplayMessages);
 	Method(GetReplayInfo);
+#ifdef REPLAY_MESSAGE_EXTENDED
+	Method(AddChatReplayMessage);
+#endif
 
 	Method(SaveReplay);
 
@@ -419,6 +422,9 @@ void CvLuaGame::RegisterMembers(lua_State* L)
 #endif
 #ifdef LUAAPI_GET_TURN_TIME_ELAPSED
 	Method(GetTurnTimeElapsed);
+#endif
+#if defined(LEKMOD_COMBAT_PREDICTOR_IMPROVEMENTS)
+	Method(GetCombatDamage);
 #endif
 }
 //------------------------------------------------------------------------------
@@ -1737,6 +1743,22 @@ int CvLuaGame::lGetNumReplayMessages(lua_State* L)
 {
 	return BasicLuaMethod(L, &CvGame::getNumReplayMessages);
 }
+//------------------------------------------------------------------------------
+#ifdef REPLAY_MESSAGE_EXTENDED
+// void AddChatReplayMessage(PlayerTypes ePlayer, string text, int iTargetType = CHATTARGET_ALL, int iToPlayerOrTeam = -1)
+// Used to import lobby chat into the in-game replay/chat history with the original author.
+int CvLuaGame::lAddChatReplayMessage(lua_State* L)
+{
+	const PlayerTypes ePlayer = (PlayerTypes)lua_tointeger(L, 1);
+	const char* szText = lua_tostring(L, 2);
+	const int iTargetType = luaL_optint(L, 3, static_cast<int>(CHATTARGET_ALL));
+	const int iToPlayerOrTeam = luaL_optint(L, 4, -1);
+
+	CvString strText = szText ? szText : "";
+	GC.getGame().addReplayMessage(REPLAY_MESSAGE_CHAT, ePlayer, strText, iTargetType, iToPlayerOrTeam, -1, -1);
+	return 0;
+}
+#endif
 //------------------------------------------------------------------------------
 //CyReplayInfo* getReplayInfo();
 int CvLuaGame::lGetReplayInfo(lua_State* L)
@@ -3319,5 +3341,217 @@ int CvLuaGame::lGetTurnTimeElapsed(lua_State* L)
 	lua_pushinteger(L, static_cast<int>(GC.getGame().getTimeElapsed() * 1000));
 
 	return 1;
+}
+#endif
+#if defined(LEKMOD_COMBAT_PREDICTOR_IMPROVEMENTS)
+int CvLuaGame::lGetCombatDamage(lua_State* L)
+{
+	CvUnit* pAttacker = CvLuaUnit::GetInstance(L, 1, false);
+	CvCity* pAttackerCity = CvLuaCity::GetInstance(L, 2, false);
+	CvUnit* pDefender = CvLuaUnit::GetInstance(L, 3, false);
+	CvCity* pDefenderCity = CvLuaCity::GetInstance(L, 4, false);
+	CvUnit* pInterceptor = CvLuaUnit::GetInstance(L, 5, false);
+	CvPlot* pPlot = CvLuaPlot::GetInstance(L, 6, false);
+	const bool bRangedAttack = lua_toboolean(L, 7);
+	const bool bBombingMission = lua_toboolean(L, 8);
+	const bool bAirSweep = lua_toboolean(L, 9);
+
+	CvCombatInfo kInfo;
+	kInfo.setUnit(BATTLE_UNIT_ATTACKER, pAttacker);
+	kInfo.setUnit(BATTLE_UNIT_DEFENDER, pDefender);
+	kInfo.setCity(BATTLE_UNIT_ATTACKER, pAttackerCity);
+	kInfo.setCity(BATTLE_UNIT_DEFENDER, pDefenderCity);
+	kInfo.setUnit(BATTLE_UNIT_INTERCEPTOR, pInterceptor);
+	kInfo.setPlot(pPlot);
+
+	kInfo.setAttackIsRanged(bRangedAttack);
+	kInfo.setAttackIsBombingMission(bBombingMission);
+	kInfo.setAttackIsAirSweep(bAirSweep);
+
+	const bool bOrdinaryRangedAttack = bRangedAttack && !bBombingMission && !bAirSweep;
+	kInfo.setDefenderRetaliates(!bOrdinaryRangedAttack);
+	kInfo.setCombatPrediction(true);
+
+	GC.getGame().getCombatDamage(kInfo);
+
+	lua_createtable(L, 0, 0);
+
+	// Combat flags
+	lua_pushboolean(L, kInfo.getAttackIsRanged());
+	lua_setfield(L, -2, "IsRangedAttack");
+
+	lua_pushboolean(L, kInfo.getAttackIsBombingMission());
+	lua_setfield(L, -2, "IsBombingMission");
+
+	lua_pushboolean(L, kInfo.getAttackIsAirSweep());
+	lua_setfield(L, -2, "IsAirSweep");
+
+	lua_pushboolean(L, kInfo.getDefenderRetaliates());
+	lua_setfield(L, -2, "DefenderRetaliates");
+
+	// Attacker table
+	lua_createtable(L, 0, 10);
+
+	lua_pushinteger(L, kInfo.getDamageInflicted(BATTLE_UNIT_ATTACKER));
+	lua_setfield(L, -2, "DamageInflicted");
+
+	lua_pushinteger(L, kInfo.getFinalDamage(BATTLE_UNIT_ATTACKER));
+	lua_setfield(L, -2, "FinalDamage");
+
+	lua_pushinteger(L, kInfo.getExperience(BATTLE_UNIT_ATTACKER));
+	lua_setfield(L, -2, "Experience");
+
+	lua_pushinteger(L, kInfo.getMaxExperienceAllowed(BATTLE_UNIT_ATTACKER));
+	lua_setfield(L, -2, "MaxExperienceAllowed");
+
+	lua_pushboolean(L, kInfo.getInBorders(BATTLE_UNIT_ATTACKER));
+	lua_setfield(L, -2, "InBorders");
+
+	lua_pushboolean(L, kInfo.getUpdateGlobal(BATTLE_UNIT_ATTACKER));
+	lua_setfield(L, -2, "UpdateGlobal");
+
+	if (pAttacker != NULL)
+	{
+		lua_pushboolean(L, true);
+		lua_setfield(L, -2, "IsUnit");
+
+		lua_pushinteger(L, pAttacker->getOwner());
+		lua_setfield(L, -2, "Owner");
+
+		lua_pushinteger(L, pAttacker->GetID());
+		lua_setfield(L, -2, "ID");
+
+		lua_pushinteger(L, pAttacker->getDamage());
+		lua_setfield(L, -2, "CurrentDamage");
+
+		lua_pushinteger(L, pAttacker->GetMaxHitPoints());
+		lua_setfield(L, -2, "MaxHitPoints");
+	}
+	else if (pAttackerCity != NULL)
+	{
+		lua_pushboolean(L, true);
+		lua_setfield(L, -2, "IsCity");
+
+		lua_pushinteger(L, pAttackerCity->getOwner());
+		lua_setfield(L, -2, "Owner");
+
+		lua_pushinteger(L, pAttackerCity->GetID());
+		lua_setfield(L, -2, "ID");
+
+		lua_pushinteger(L, pAttackerCity->getDamage());
+		lua_setfield(L, -2, "CurrentDamage");
+
+		lua_pushinteger(L, pAttackerCity->GetMaxHitPoints());
+		lua_setfield(L, -2, "MaxHitPoints");
+	}
+
+	// Pops the attacker table and assigns it to the root table.
+	lua_setfield(L, -2, "Attacker");
+
+
+	// Defender table
+	lua_createtable(L, 0, 10);
+
+	lua_pushinteger(L, kInfo.getDamageInflicted(BATTLE_UNIT_DEFENDER));
+	lua_setfield(L, -2, "DamageInflicted");
+
+	lua_pushinteger(L, kInfo.getFinalDamage(BATTLE_UNIT_DEFENDER));
+	lua_setfield(L, -2, "FinalDamage");
+
+	lua_pushinteger(L, kInfo.getExperience(BATTLE_UNIT_DEFENDER));
+	lua_setfield(L, -2, "Experience");
+
+	lua_pushinteger(L, kInfo.getMaxExperienceAllowed(BATTLE_UNIT_DEFENDER));
+	lua_setfield(L, -2, "MaxExperienceAllowed");
+
+	lua_pushboolean(L, kInfo.getInBorders(BATTLE_UNIT_DEFENDER));
+	lua_setfield(L, -2, "InBorders");
+
+	lua_pushboolean(L, kInfo.getUpdateGlobal(BATTLE_UNIT_DEFENDER));
+	lua_setfield(L, -2, "UpdateGlobal");
+
+	if (pDefender != NULL)
+	{
+		lua_pushboolean(L, true);
+		lua_setfield(L, -2, "IsUnit");
+
+		lua_pushinteger(L, pDefender->getOwner());
+		lua_setfield(L, -2, "Owner");
+
+		lua_pushinteger(L, pDefender->GetID());
+		lua_setfield(L, -2, "ID");
+
+		lua_pushinteger(L, pDefender->getDamage());
+		lua_setfield(L, -2, "CurrentDamage");
+
+		lua_pushinteger(L, pDefender->GetMaxHitPoints());
+		lua_setfield(L, -2, "MaxHitPoints");
+	}
+	else if (pDefenderCity != NULL)
+	{
+		lua_pushboolean(L, true);
+		lua_setfield(L, -2, "IsCity");
+
+		lua_pushinteger(L, pDefenderCity->getOwner());
+		lua_setfield(L, -2, "Owner");
+
+		lua_pushinteger(L, pDefenderCity->GetID());
+		lua_setfield(L, -2, "ID");
+
+		lua_pushinteger(L, pDefenderCity->getDamage());
+		lua_setfield(L, -2, "CurrentDamage");
+
+		lua_pushinteger(L, pDefenderCity->GetMaxHitPoints());
+		lua_setfield(L, -2, "MaxHitPoints");
+	}
+
+	lua_setfield(L, -2, "Defender");
+
+
+	// Interceptor table
+	if (pInterceptor != NULL)
+	{
+		lua_createtable(L, 0, 10);
+
+		lua_pushinteger(L, kInfo.getDamageInflicted(BATTLE_UNIT_INTERCEPTOR));
+		lua_setfield(L, -2, "DamageInflicted");
+
+		lua_pushinteger(L, kInfo.getFinalDamage(BATTLE_UNIT_INTERCEPTOR));
+		lua_setfield(L, -2, "FinalDamage");
+
+		lua_pushinteger(L, kInfo.getExperience(BATTLE_UNIT_INTERCEPTOR));
+		lua_setfield(L, -2, "Experience");
+
+		lua_pushinteger(L, kInfo.getMaxExperienceAllowed(BATTLE_UNIT_INTERCEPTOR));
+		lua_setfield(L, -2, "MaxExperienceAllowed");
+
+		lua_pushboolean(L, kInfo.getInBorders(BATTLE_UNIT_INTERCEPTOR));
+		lua_setfield(L, -2, "InBorders");
+
+		lua_pushboolean(L, kInfo.getUpdateGlobal(BATTLE_UNIT_INTERCEPTOR));
+		lua_setfield(L, -2, "UpdateGlobal");
+
+		lua_pushinteger(L, pInterceptor->getOwner());
+		lua_setfield(L, -2, "Owner");
+
+		lua_pushinteger(L, pInterceptor->GetID());
+		lua_setfield(L, -2, "ID");
+
+		lua_pushinteger(L, pInterceptor->getDamage());
+		lua_setfield(L, -2, "CurrentDamage");
+
+		lua_pushinteger(L, pInterceptor->GetMaxHitPoints());
+		lua_setfield(L, -2, "MaxHitPoints");
+
+		lua_setfield(L, -2, "Interceptor");
+	}
+	else
+	{
+		lua_pushnil(L);
+		lua_setfield(L, -2, "Interceptor");
+	}
+
+	return 1;
+
 }
 #endif

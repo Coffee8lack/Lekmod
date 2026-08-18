@@ -342,6 +342,9 @@
 
 /// Randomizes the order in which player turns activate in simultaneous mode. E.g. this makes it so that the host no longer wins wonder races against all other players if they finish a wonder the same turn as another player.
 #define NQM_GAME_RANDOMIZE_TURN_ACTIVATION_ORDER_IN_SIMULTANEOUS
+// World Congress founding + 2nd proposer vote ties respect GAMEOPTION_SIMULTANEOUS_PLAYER_TURN_ACTIVATION_ORDER_RANDOMIZED
+// (persist human activation shuffle; option on = activation order, option off = slot ID / existing random founder)
+#define LEKMOD_WC_RESPECT_ACTIVATION_ORDER
 /*
 /// Anti-air ground/sea units can no longer intercept planes after they move until the player ends their turn. This should only affect simultaneous mode and stops players from deliberately moving in AA after another player has done air sweeps.
 #define NQM_UNIT_NO_AA_INTERCEPT_AFTER_MOVE_BEFORE_TURN_END
@@ -657,9 +660,6 @@
 /// When calculating the founding value of a tile, tailor the SiteEvaluation function to the current player instead of the first one
 #define AUI_STARTPOSITIONER_FLAVORED_STARTS
 
-// Weird stuff
-/// Adds ranged counterattacks to the game, toggleable for now via in-game option
-#define DEL_RANGED_COUNTERATTACKS
 */
 
 // GlobalDefines (GD) wrappers
@@ -789,8 +789,6 @@
 // make build times round down to lowest 10 so that Quick Speed doesn't have built times of 201 or 402
 #define NQ_ROUND_BUILD_TIMES_DOWN
 // HACK: Golden Pilgrimage Trait (new civ Mali) needs to give +1 Faith to tiles that make at least 1 Gold during a golden age
-#define NQ_GOLDEN_PILGRIMAGE
-// HACK: Mali Treasury needs to be in C++ instead of Lua to fix the resync issue
 #define NQ_MALI_TREASURY
 // allow gifting faith to minors via beliefs
 #define NQ_BELIEF_TOGGLE_ALLOW_FAITH_GIFTS_TO_MINORS
@@ -954,6 +952,9 @@
 #define LEKMOD_BUILDING_GP_EXPEND_YIELD
 // Units or Buildings with a faith cost no longer need a religion to be purchased unless unlocked by a belief
 #define LEKMOD_FAITH_PURCHASE_NO_RELIGION
+// Policy/trait FaithCostModifier (Mandate of Heaven, etc.) only discounts faith-only religious
+// buildings (FaithCost>0 + UnlockedByBelief + Cost==-1), not Work Ethic factories / NW faith buys
+#define LEKMOD_FAITH_COST_MOD_RELIGIOUS_ONLY
 // New ancient ruin rewards that can be specified in xml
 #define LEKMOD_NEW_ANCIENT_RUIN_REWARDS
 // Fixes a rare events where players could get the oxford university building for free with the legalism policy
@@ -1045,7 +1046,6 @@
 
 #define TRAITIFY
 /* This import of Traitify has
-✓ GoldenAgeCultureModifier -- Romania Trait
 ✓ NumExtraLeagueVotes -- Vactican Trait, and part of the more informative league vote break down with MISC_CHANGES
 	TXT_KEY_LEAGUE_OVERVIEW_MEMBER_DETAILS_TRAIT_VOTES
 ✓ NumTradeRouteBonus -- Venice Trait
@@ -1106,6 +1106,10 @@ TXT_KEY_LEAGUE_OVERVIEW_MEMBER_DETAILS_TRAIT_VOTES
 #define LEKMOD_BUILDING_MILITARY_PRODUCTION_MOD
 // Adds a dedicated DLL/Lua check for disabled luxury trades when target already has the luxury.
 #define LEKMOD_LUXURY_DUPLICATE_TRADE_TOOLTIP
+// When a World Congress luxury ban passes, cancel all deals involving that resource.
+#define LEKMOD_LUXURY_BAN_CANCEL_DEALS
+// Don't add feature-clear time when an improvement keeps the feature (Trading Post etc.). Forts still pay it.
+#define LEKMOD_SKIP_FEATURE_TIME_IF_NOT_REMOVED
 // Exposes pending incoming deal sender list (oldest first) for End Turn UI prompting.
 #define LEKMOD_PENDING_DEAL_TURN_PROMPT
 // Allows the Collection of Golden Age Points during a Golden Age via game option.
@@ -1146,6 +1150,8 @@ TXT_KEY_LEAGUE_OVERVIEW_MEMBER_DETAILS_TRAIT_VOTES
 #define LEKMOD_RELOCATE_PROMOTION_PREREQ_ORS
 // Changes made to CS quests
 #define LEKMOD_CITYSTATE_QUEST_CHANGES
+// Data-driven city-state personalities loaded from Minor_Civ_Personalities tables
+#define LEKMOD_MINOR_CIV_PERSONALITIES
 // Alters the Parameters for the Merchant of Venice buyout
 #define LEKMOD_MERCHANT_BUYOUT_NOT_NOANNEXING
 // Unlinks Repair for Improvements time and Route build time.
@@ -1199,10 +1205,73 @@ TXT_KEY_LEAGUE_OVERVIEW_MEMBER_DETAILS_TRAIT_VOTES
 // Prevent Helicopters from getting the Embark promotion upon upgrading
 #define LEKMOD_HELICOPTER_EMBARK_FIX
 
+/* v35 Changes
+todo:
+refactor CS entirely to be less asinine.
+	- as a start, just the ally and friend yields. those shouldnt be collected like they are now. instead the CS should push the yield into a player cache for it.
 
+romania and brazil traits are double counted
 
+*/
+#define v35_TRAITIFY
+/// Trait_FreeResourceCities City=true grants free resource copies to the city (like buildings) instead of placing on the city tile; Trait_FreeResourceCityYieldChanges for yields on those cities (map plot display)
+#define LEKMOD_FREE_RESOURCE_CITY_GRANT
+/// Water-walk improvements (pontoon / water polder): pillage/remove embark rules, no roads on them, ActsAsRoute tech gates, stacked land+naval combat restrictions
+#define LEKMOD_WATER_WALK_IMPROVEMENT_RULES
+/// Expose all Features DB rows on Lua FeatureTypes (FEATURE_SHALLOWS, ATOLL, NWs, etc.) instead of the hardcoded vanilla set
+#define LEKMOD_LUA_FEATURETYPES_FROM_DB
+// Change the Yield from Cities depending on thier CvArea. 
+#define LEKMOD_AREA_BASED_CITY_YIELD
+// Grant building yields based on nearby terrain: either per matching tile in a radius, or a flat bonus once a terrain count threshold is met in a radius
+#define LEKMOD_NEARBY_TERRAIN_FREE_YIELDS
+// Fix all the specificity in Beliefs
+#define LEKMOD_BELIEF_YIELDIFY
+// When a resource is removed from a plot, but it can't be seen by the player, move it to a new plot instead of deleting it.
+#define LEKMOD_RELOCATE_RESOURCE
+// Don't delete undiscovered resources under RemovesResource improvements; permanent ones auto-connect when revealed.
+#define LEKMOD_PRESERVE_UNDISCOVERED_RESOURCES_ON_REMOVE_IMPROVEMENT
 // Generic define for temp changes
 #define CLEAN_UP
+// Experimental Changes
+#define LEKMOD_EXPERIMENTAL_CHANGES
+// Collect Great Firewall anti-internet effect into the player
+#define LEKMOD_GREAT_FIREWALL_PLAYER_EFFECT
+// Transfer production to newly unlocked units upon tech research
+#define LEKMOD_INSTANT_UNLOCK_TRANSFER
+// Change the way units obsolete. Instead of it being a specific tech, it can now be set to the availability of a unitclass. this will prevent some civs from having a long time frame from having a unit go obsolete without a replacement.
+#define LEKMOD_ALT_OBSOLESCENCE
+// stuff for the new Buganda Lake
+#define LEKMOD_BUGANDA_LAKE
+// Yield Threshold for Extra Yield from a Tile during a Golden Age from Traits.
+#define LEKMOD_GOLDEN_AGE_YIELD_THRESHOLD
+// First Time buying in a city with faith or gold is discounted.
+#define LEKMOD_BUILDING_FIRST_PURCHASE_DISCOUNT
+// Refactor and Expand Trade Routes.
+#define TRADE_REFACTOR
+// DLL adjustments for Units based on Era.
+#define LEKMOD_UNIT_STRENGTH_PROMOTION_ERA
+
+#define LEKMOD_COMBAT_PREDICTOR_IMPROVEMENTS
+// UnitPromotions_Domains: Attack / Defense columns (like UnitClasses); Modifier still applies to both sides
+#define LEKMOD_DOMAIN_PROMO_ATTACK_DEFENSE
+#define GAMEOPTION_NO_COMBAT_RANDOMNESS "GAMEOPTION_LEKMOD_NO_COMBAT_RANDOMNESS"
+// Push out the hard coded culture classes aspects into the dll.
+#define LEKMOD_CULTURE_CLASSES_DATABASE
+
+#define BEE
+/*
+Stuff added/to be added for BEE
+Traits that can give yield from city connections
+Diversify the Hanse/EU thing
+4/5th Ring working
+Improvements that consume movement points to move into.
+Production % to buildings via Beliefs
+Celts Trait/Tonga UB/Swiss UB2 things
+Trait Tribute yield mod
+Promotions that turn damage dealt into yield a la Coastal Raider
+Diversify Spain and Australia's NW Discovery bonus
+*/
+
 // ------------------------------------------- Loup's Changes End -------------------------------------------------- \\
 ////////////////////////
 //Benched or not working
@@ -1219,8 +1288,11 @@ TXT_KEY_LEAGUE_OVERVIEW_MEMBER_DETAILS_TRAIT_VOTES
 //EAP: AI will now use workers like workboats CURRENTLY NOT WORKING
 //#define AI_WORKER_EMBARKED_FIX
 //EAP: Add Tourism as an actual yield (for buildings etc) CURRENTLY NOT WORKING
-//#define LEK_YIELD_TOURISM
+#define LEK_YIELD_TOURISM
+/* New Text Keys
 
+
+*/
 /// EAP: Some stuff related to the above
 #define RING0_PLOTS											(1)
 #define RING1_PLOTS											(7)
@@ -1436,7 +1508,6 @@ TXT_KEY_LEAGUE_OVERVIEW_MEMBER_DETAILS_TRAIT_VOTES
 // Game.GetTurnTimeElapsed() returns elapsed time in milliseconds
 #define LUAAPI_GET_TURN_TIME_ELAPSED
 /*REPLAY EVENTS CHANGES END*/
-
 
 /*LOGGING START*/
 ///

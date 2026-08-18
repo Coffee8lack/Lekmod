@@ -144,7 +144,9 @@ CvPlayer::CvPlayer() :
 	, m_iJONSCulture("CvPlayer::m_iJONSCulture", m_syncArchive, true)
 	, m_iJONSCultureEverGenerated("CvPlayer::m_iJONSCulture", m_syncArchive)
 #endif
+#if !defined(LEKMOD_EXPERIMENTAL_CHANGES)
 	, m_iCulturePerWonder("CvPlayer::m_iCulturePerWonder", m_syncArchive)
+#endif
 	, m_iCultureWonderMultiplier("CvPlayer::m_iCultureWonderMultiplier", m_syncArchive)
 	, m_iCulturePerTechResearched("CvPlayer::m_iCulturePerTechResearched", m_syncArchive)
 	, m_iFaith(0)
@@ -291,7 +293,9 @@ CvPlayer::CvPlayer() :
 	, m_iUnitProductionMaintenanceMod("CvPlayer::m_iUnitProductionMaintenanceMod", m_syncArchive)
 	, m_iPolicyCostBuildingModifier("CvPlayer::m_iPolicyCostBuildingModifier", m_syncArchive)
 	, m_iPolicyCostMinorCivModifier("CvPlayer::m_iPolicyCostMinorCivModifier", m_syncArchive)
+#if !defined(LEK_YIELD_TOURISM)
 	, m_iInfluenceSpreadModifier(0)
+#endif
 	, m_iExtraVotesPerDiplomat(0)
 	, m_iNumNukeUnits("CvPlayer::m_iNumNukeUnits", m_syncArchive)
 	, m_iNumOutsideUnits("CvPlayer::m_iNumOutsideUnits", m_syncArchive, true)
@@ -337,6 +341,9 @@ CvPlayer::CvPlayer() :
 #endif
 #ifdef NQ_ALLOW_PUPPET_PURCHASING_FROM_POLICIES
 	, m_iAllowPuppetPurchasingCount(0)
+#endif
+#if defined(LEKMOD_GREAT_FIREWALL_PLAYER_EFFECT)
+	, m_iInfluenceNullificationCount(0)
 #endif
 	, m_iEnablesSSPartPurchaseCount(0)
 	, m_iConscriptCount("CvPlayer::m_iConscriptCount", m_syncArchive)
@@ -435,6 +442,12 @@ CvPlayer::CvPlayer() :
 #endif
 	, m_eID("CvPlayer::m_eID", m_syncArchive)
 	, m_ePersonalityType("CvPlayer::m_ePersonalityType", m_syncArchive)
+#if defined(LEKMOD_EXPERIMENTAL_CHANGES)
+	, m_aiWorldWonderYieldChanges("CvPlayer::m_aiWorldWonderYieldChanges", m_syncArchive)
+#endif
+#if defined(STANDARDIZE_YIELDS) // YieldEverGenerated Array, instead of an int per yield type
+	, m_aiYieldEverGeneratedTimes100("CvPlayer::m_aiYieldEverGeneratedTimes100", m_syncArchive)
+#endif
 	, m_aiCityYieldChange("CvPlayer::m_aiCityYieldChange", m_syncArchive)
 	, m_aiCoastalCityYieldChange("CvPlayer::m_aiCoastalCityYieldChange", m_syncArchive)
 	, m_aiCapitalYieldChange("CvPlayer::m_aiCapitalYieldChange", m_syncArchive)
@@ -468,10 +481,6 @@ CvPlayer::CvPlayer() :
 #ifdef LEKMOD_UNITCOMBAT_FREE_PROMOTION
 	, m_paiUnitCombatFreePromotionCount("CvPlayer::m_paiFreeUnitCombatPromotionCount", m_syncArchive)
 #endif
-#ifdef LEKMOD_v34
-	, m_aiSameLandMassYieldChange("CvPlayer::m_aiSameLandMassYieldChange", m_syncArchive)
-    , m_aiDifferentLandMassYieldChange("CvPlayer::m_aiDifferentLandMassYieldChange", m_syncArchive)
-#endif
 	, m_paiUnitCombatProductionModifiers("CvPlayer::m_paiUnitCombatProductionModifiers", m_syncArchive)
 	, m_paiUnitCombatFreeExperiences("CvPlayer::m_paiUnitCombatFreeExperiences", m_syncArchive)
 	, m_paiUnitClassCount("CvPlayer::m_paiUnitClassCount", m_syncArchive, true)
@@ -483,6 +492,9 @@ CvPlayer::CvPlayer() :
 	, m_paiHurryModifier("CvPlayer::m_paiHurryModifier", m_syncArchive)
 	, m_pabLoyalMember("CvPlayer::m_pabLoyalMember", m_syncArchive)
 	, m_pabGetsScienceFromPlayer("CvPlayer::m_pabGetsScienceFromPlayer", m_syncArchive)
+#if defined(LEKMOD_GREAT_WORK_YIELD_EFFECTS)
+	, m_ppaaiGreatWorkClassYieldChange("CvPlayer::m_ppaaiGreatWorkClassYieldChange", m_syncArchive)
+#endif
 	, m_ppaaiSpecialistExtraYield("CvPlayer::m_ppaaiSpecialistExtraYield", m_syncArchive)
 	, m_ppaaiImprovementYieldChange("CvPlayer::m_ppaaiImprovementYieldChange", m_syncArchive)
 	, m_ppaaiBuildingClassYieldMod("CvPlayer::m_ppaaiBuildingClassYieldMod", m_syncArchive)
@@ -741,21 +753,37 @@ void CvPlayer::init(PlayerTypes eID)
 #if defined(LEKMOD_FIX_PATRO_FOOD)
 		ChangeCityStateBonusModifier(GetPlayerTraits()->GetCityStateBonusModifier()); // Siam Trait. Still directly referenced in several places, just put here for stacking with patro finisher.
 #endif
+#if defined(LEKMOD_COMBAT_PREDICTOR_IMPROVEMENTS)
+		ChangeGreatGeneralCombatBonus(GetPlayerTraits()->GetGreatGeneralExtraBonus()); // China Trait
+#endif
 		for(iJ = 0; iJ < NUM_YIELD_TYPES; iJ++)
 		{
+			YieldTypes eYield = static_cast<YieldTypes>(iJ);
 #if !defined(LEKMOD_CITY_YIELDS_TRAITS)
-			ChangeCityYieldChange((YieldTypes)iJ, 100 * GetPlayerTraits()->GetFreeCityYield((YieldTypes)iJ));
+			ChangeCityYieldChange(eYield, 100 * GetPlayerTraits()->GetFreeCityYield(eYield));
 #endif
-			changeYieldRateModifier((YieldTypes)iJ, GetPlayerTraits()->GetYieldRateModifier((YieldTypes)iJ));
+			changeYieldRateModifier(eYield, GetPlayerTraits()->GetYieldRateModifier(eYield));
+#if defined(LEKMOD_EXPERIMENTAL_CHANGES)
+			ChangeWorldWonderYieldChanges(eYield, GetPlayerTraits()->GetWorldWonderYieldChange(eYield));
+#endif
+#if defined(LEKMOD_GREAT_WORK_YIELD_EFFECTS)
+			ChangeGreatWorkYieldChange(eYield, GetPlayerTraits()->GetGreatWorkYieldChange(eYield));
+			for (iI = 0; iI < GC.getNumGreatWorkClassInfos(); ++iI)
+			{
+				ChangeGreatWorkClassYieldChange((GreatWorkClass)iI, eYield, GetPlayerTraits()->GetGreatWorkClassYieldChange((GreatWorkClass)iI, eYield));
+			}
+#endif
 		}
+		// TODO: unfuck traits so i dont have to reset in player init.
+		GetPlayerTraits()->GetUsedGroupAreas().clear();
+		GetPlayerTraits()->GetGroupPriority().clear();
 
 		recomputeGreatPeopleModifiers();
-
-		for(iI = 0; iI < NUM_YIELD_TYPES; iI++)
+		for(iJ = 0; iJ < NUM_YIELD_TYPES; iJ++)
 		{
-			updateExtraYieldThreshold((YieldTypes)iI);
+			updateExtraYieldThreshold((YieldTypes)iJ);
 		}
-#if defined(LEKMOD_GREAT_WORK_YIELD_EFFECTS) // Initialize the Base Culture output of Greatworks
+#if !defined(LEKMOD_GREAT_WORK_YIELD_EFFECTS)
 		ChangeGreatWorkYieldChange(YIELD_CULTURE, GC.getBASE_CULTURE_PER_GREAT_WORK());
 #endif
 		CvCivilizationInfo& playerCivilizationInfo = getCivilizationInfo();
@@ -782,8 +810,11 @@ void CvPlayer::init(PlayerTypes eID)
 		{
 			changeFreeBuildingCount(eFreeBuilding, 1);
 		}
-
+#if !defined(LEKMOD_COMBAT_PREDICTOR_IMPROVEMENTS)
 		SetGreatGeneralCombatBonus(GC.getGREAT_GENERAL_STRENGTH_MOD());
+#else
+		ChangeGreatGeneralCombatBonus(GC.getGREAT_GENERAL_STRENGTH_MOD());
+#endif
 	}
 
 	m_aiPlots.clear();
@@ -879,10 +910,13 @@ void CvPlayer::uninit()
 	{
 		m_pDangerPlots->Uninit();
 	}
-
+#if defined(LEKMOD_GREAT_WORK_YIELD_EFFECTS)
+	m_ppaaiGreatWorkClassYieldChange.clear();
+#endif
 	m_ppaaiSpecialistExtraYield.clear();
 	m_ppiImprovementYieldChange.clear();
 	m_ppaaiImprovementYieldChange.clear();
+
 	m_ppiResourceYieldChange.clear();
 	m_ppaaiBuildingClassYieldMod.clear();
 
@@ -929,7 +963,9 @@ void CvPlayer::uninit()
 	m_iJONSCulture = 0;
 	m_iJONSCultureEverGenerated = 0;
 #endif
+#if !defined(LEKMOD_EXPERIMENTAL_CHANGES)
 	m_iCulturePerWonder = 0;
+#endif
 	m_iCultureWonderMultiplier = 0;
 	m_iCulturePerTechResearched = 0;
 	m_iFaith = 0;
@@ -1084,7 +1120,9 @@ void CvPlayer::uninit()
 	m_iUnitProductionMaintenanceMod = 0;
 	m_iPolicyCostBuildingModifier = 0;
 	m_iPolicyCostMinorCivModifier = 0;
+#if !defined(LEK_YIELD_TOURISM)
 	m_iInfluenceSpreadModifier = 0;
+#endif
 	m_iExtraVotesPerDiplomat = 0;
 	m_iNumNukeUnits = 0;
 	m_iNumOutsideUnits = 0;
@@ -1130,6 +1168,9 @@ void CvPlayer::uninit()
 #endif
 #ifdef NQ_ALLOW_PUPPET_PURCHASING_FROM_POLICIES
 	m_iAllowPuppetPurchasingCount = 0;
+#endif
+#if defined(LEKMOD_GREAT_FIREWALL_PLAYER_EFFECT)
+	m_iInfluenceNullificationCount = 0;
 #endif
 	m_iEnablesSSPartPurchaseCount = 0;
 	m_iConscriptCount = 0;
@@ -1279,7 +1320,14 @@ void CvPlayer::reset(PlayerTypes eID, bool bConstructorCall)
 
 	// tutorial info
 	m_bEverPoppedGoody = false;
-
+#if defined(LEKMOD_EXPERIMENTAL_CHANGES)
+	m_aiWorldWonderYieldChanges.clear();
+	m_aiWorldWonderYieldChanges.resize(NUM_YIELD_TYPES, 0);
+#endif
+#if defined(STANDARDIZE_YIELDS)
+	m_aiYieldEverGeneratedTimes100.clear();
+	m_aiYieldEverGeneratedTimes100.resize(NUM_YIELD_TYPES, 0);
+#endif
 	m_aiCityYieldChange.clear();
 	m_aiCityYieldChange.resize(NUM_YIELD_TYPES, 0);
 
@@ -1543,7 +1591,14 @@ void CvPlayer::reset(PlayerTypes eID, bool bConstructorCall)
 		{
 			m_ppaaiSpecialistExtraYield.setAt(i, yield);
 		}
-
+#if defined(LEKMOD_GREAT_WORK_YIELD_EFFECTS)
+		m_ppaaiGreatWorkClassYieldChange.clear();
+		m_ppaaiGreatWorkClassYieldChange.resize(GC.getNumGreatWorkClassInfos());
+		for(unsigned int i = 0; i < m_ppaaiGreatWorkClassYieldChange.size(); ++i)
+		{
+			m_ppaaiGreatWorkClassYieldChange.setAt(i, yield);
+		}
+#endif
 		m_ppaaiImprovementYieldChange.clear();
 		m_ppaaiImprovementYieldChange.resize(GC.getNumImprovementInfos());
 		for(unsigned int i = 0; i < m_ppaaiImprovementYieldChange.size(); ++i)
@@ -1571,7 +1626,9 @@ void CvPlayer::reset(PlayerTypes eID, bool bConstructorCall)
 		{
 			m_ppaaiBuildingClassYieldMod.setAt(i, yield);
 		}
-
+#if defined(STANDARDIZE_YIELDS)
+		m_aBuildingYieldChangeCache.clear();
+#endif
 		m_aVote.clear();
 		m_aUnitExtraCosts.clear();
 	}
@@ -2596,6 +2653,20 @@ void CvPlayer::acquireCity(CvCity* pOldCity, bool bConquest, bool bGift, bool bP
 	UnitTypes eAcquiredCitySettlerUnit = pOldCity->SettlerUnit();
 #endif
 
+#if defined(LEKMOD_FREE_RESOURCE_CITY_GRANT)
+	const int iNumResourceInfosForFreeGrant = GC.getNumResourceInfos();
+	std::vector<int> paiFreeResourceCityGrant(iNumResourceInfosForFreeGrant, 0);
+	int aiYieldFromFreeResourceCity[NUM_YIELD_TYPES] = {};
+	for (int iResource = 0; iResource < iNumResourceInfosForFreeGrant; ++iResource)
+	{
+		paiFreeResourceCityGrant[iResource] = pOldCity->GetFreeResource((ResourceTypes)iResource);
+	}
+	for (int iYield = 0; iYield < NUM_YIELD_TYPES; ++iYield)
+	{
+		aiYieldFromFreeResourceCity[iYield] = pOldCity->GetYieldFromFreeResourceCity((YieldTypes)iYield);
+	}
+#endif
+
 	// Traded cities between humans don't heal (an exploit would be to trade a city back and forth between teammates to get an instant heal.)
 	if(!bGift || !isHuman() || !GET_PLAYER(pOldCity->getOwner()).isHuman())
 	{
@@ -2856,6 +2927,28 @@ void CvPlayer::acquireCity(CvCity* pOldCity, bool bConquest, bool bGift, bool bP
 	if (!bIsMinorCivBuyout)
 	{
 		pNewCity->SetSettlerUnit(eAcquiredCitySettlerUnit);
+	}
+#endif
+
+#if defined(LEKMOD_FREE_RESOURCE_CITY_GRANT)
+	if (!bIsMinorCivBuyout)
+	{
+		for (int iResource = 0; iResource < iNumResourceInfosForFreeGrant; ++iResource)
+		{
+			const int iQty = paiFreeResourceCityGrant[iResource];
+			if (iQty != 0)
+			{
+				pNewCity->ChangeFreeResource((ResourceTypes)iResource, iQty);
+			}
+		}
+		for (int iYield = 0; iYield < NUM_YIELD_TYPES; ++iYield)
+		{
+			pNewCity->SetYieldFromFreeResourceCity((YieldTypes)iYield, aiYieldFromFreeResourceCity[iYield]);
+		}
+		if (pNewCity->plot())
+		{
+			pNewCity->plot()->updateYield();
+		}
 	}
 #endif
 
@@ -5687,7 +5780,11 @@ void CvPlayer::DoUnitReset()
 		{
 			pLoopUnit->changeDamage(iCitadelDamage, NO_PLAYER, /*fAdditionalTextDelay*/ 0.5f);
 		}
-
+#if defined(v35_TRAITIFY)
+		pLoopUnit->setMadeAttackLastTurn(pLoopUnit->isOutOfAttacks());
+		pLoopUnit->setKilledUnitLastTurn(pLoopUnit->killedUnit());
+		pLoopUnit->setKilledUnit(false);
+#endif
 		// Finally (now that healing is done), restore movement points
 		pLoopUnit->setMoves(pLoopUnit->maxMoves());
 		if (pLoopUnit->IsGreatGeneral())
@@ -6851,6 +6948,7 @@ void CvPlayer::disband(CvCity* pCity)
 				}
 			}
 		}
+
 	}
 }
 
@@ -10466,7 +10564,10 @@ void CvPlayer::processBuilding(BuildingTypes eBuilding, int iChange, bool bFirst
 	CvBuildingEntry* pBuildingInfo = GC.getBuildingInfo(eBuilding);
 	if(pBuildingInfo == NULL)
 		return;
-
+#if defined(LEKMOD_AREA_BASED_CITY_YIELD)// Make the code for Belem less heavy in the plot calc
+	CvArea* pLoopArea;
+	CvMap& map = GC.getMap();
+#endif
 	// One-shot items
 	if(bFirst && iChange > 0)
 	{
@@ -10668,13 +10769,27 @@ void CvPlayer::processBuilding(BuildingTypes eBuilding, int iChange, bool bFirst
 
 	for(iI = 0; iI < NUM_YIELD_TYPES; iI++)
 	{
-		pArea->changeYieldRateModifier(GetID(), ((YieldTypes)iI), (pBuildingInfo->GetAreaYieldModifier(iI) * iChange));
-		changeYieldRateModifier(((YieldTypes)iI), (pBuildingInfo->GetGlobalYieldModifier(iI) * iChange));
+		YieldTypes eYield = static_cast<YieldTypes>(iI);
+		pArea->changeYieldRateModifier(GetID(), eYield, (pBuildingInfo->GetAreaYieldModifier(iI) * iChange));
+		changeYieldRateModifier(eYield, (pBuildingInfo->GetGlobalYieldModifier(iI) * iChange));
 		for (iJ = 0; iJ < GC.getNumResourceInfos(); iJ++)
 		{
-			changeResourceYieldChange(((ResourceTypes)iJ), ((YieldTypes)iI), (pBuildingInfo->GetResourceYieldChangeGlobal((ResourceTypes)iJ, (YieldTypes)iI) * iChange));
+			changeResourceYieldChange(((ResourceTypes)iJ), eYield, (pBuildingInfo->GetResourceYieldChangeGlobal((ResourceTypes)iJ, eYield) * iChange));
 		}
-		
+#if defined(LEKMOD_AREA_BASED_CITY_YIELD)
+		int iLoop;
+		for (pLoopArea = map.firstArea(&iLoop); pLoopArea != NULL; pLoopArea = map.nextArea(&iLoop))
+		{
+			if (pLoopArea == pArea)
+			{
+				pLoopArea->changeCityYieldChange(GetID(), eYield, (pBuildingInfo->GetSameLandMassYieldChange(iI) * iChange));
+			}
+			else
+			{
+				pLoopArea->changeCityYieldChange(GetID(), eYield, (pBuildingInfo->GetDifferentLandMassYieldChange(iI) * iChange));
+			}
+		}
+#endif
 	}
 
 	for(iI = 0; iI < GC.getNumSpecialistInfos(); iI++)
@@ -10865,6 +10980,7 @@ void CvPlayer::processBuilding(BuildingTypes eBuilding, int iChange, bool bFirst
 #endif
 	}
 }
+
 //	--------------------------------------------------------------------------------
 /// Get yield change from buildings for a specific building class
 int CvPlayer::GetBuildingClassYieldChange(BuildingClassTypes eBuildingClass, YieldTypes eYieldType)
@@ -10873,19 +10989,19 @@ int CvPlayer::GetBuildingClassYieldChange(BuildingClassTypes eBuildingClass, Yie
 
 	CvBuildingXMLEntries* pBuildings = GC.GetGameBuildings();
 
-	if(pBuildings)
+	if (pBuildings)
 	{
 #ifdef AUI_WARNING_FIXES
 		for (uint i = 0; i < pBuildings->GetNumBuildings(); i++)
 #else
-		for(int i = 0; i < pBuildings->GetNumBuildings(); i++)
+		for (int i = 0; i < pBuildings->GetNumBuildings(); i++)
 #endif
 		{
 			// Do we have this building anywhere in empire?
-			if(countNumBuildings((BuildingTypes)i) > 0)
+			if (countNumBuildings((BuildingTypes)i) > 0)
 			{
 				CvBuildingEntry* pEntry = pBuildings->GetEntry(i);
-				if(pEntry)
+				if (pEntry)
 				{
 					rtnValue += pEntry->GetBuildingClassYieldChange(eBuildingClass, eYieldType);
 				}
@@ -10895,7 +11011,6 @@ int CvPlayer::GetBuildingClassYieldChange(BuildingClassTypes eBuildingClass, Yie
 
 	return rtnValue;
 }
-
 //	--------------------------------------------------------------------------------
 /// Can we eBuild on pPlot?
 bool CvPlayer::canBuild(const CvPlot* pPlot, BuildTypes eBuild, bool bTestEra, bool bTestVisible, bool bTestGold, bool bTestPlotOwner) const
@@ -11904,6 +12019,30 @@ int CvPlayer::specialistYield(SpecialistTypes eSpecialist, YieldTypes eYield, bo
 	return (iRtnValue);
 }
 #endif
+#if defined(LEKMOD_EXPERIMENTAL_CHANGES)
+int CvPlayer::GetWorldWonderYieldChanges(YieldTypes eYield) const
+{
+	CvAssertMsg(eYield >= 0, "eIndex is expected to be non-negative (invalid Index)");
+	CvAssertMsg(eYield < NUM_YIELD_TYPES, "eIndex is expected to be within maximum bounds (invalid Index)");
+	return m_aiWorldWonderYieldChanges[eYield];
+}
+void CvPlayer::ChangeWorldWonderYieldChanges(YieldTypes eYield, int iChange)
+{
+	CvAssertMsg(eYield >= 0, "eIndex is expected to be non-negative (invalid Index)");
+	CvAssertMsg(eYield < NUM_YIELD_TYPES, "eIndex is expected to be within maximum bounds (invalid Index)");
+	if(iChange != 0)
+	{
+		m_aiWorldWonderYieldChanges.setAt(eYield, m_aiWorldWonderYieldChanges[eYield] + iChange);
+		// Loop through all Cities and change how much eYield they produce based on how many Wonders they have
+		CvCity* pLoopCity;
+		int iLoop;
+		for (pLoopCity = firstCity(&iLoop); pLoopCity != NULL; pLoopCity = nextCity(&iLoop))
+		{
+			pLoopCity->ChangeBaseYieldRateFromBuildings(eYield, iChange);
+		}
+	}
+}
+#endif
 //	--------------------------------------------------------------------------------
 /// How much additional Yield does every City produce?
 int CvPlayer::GetCityYieldChange(YieldTypes eYield) const
@@ -11999,7 +12138,7 @@ void CvPlayer::ChangeCapitalYieldPerPopChange(YieldTypes eYield, int iChange)
 		updateYield();
 	}
 }
-
+#if !defined(LEKMOD_GREAT_WORK_YIELD_EFFECTS)
 //	--------------------------------------------------------------------------------
 /// How much additional Yield does a Great Work produce?
 int CvPlayer::GetGreatWorkYieldChange(YieldTypes eYield) const
@@ -12021,7 +12160,49 @@ void CvPlayer::ChangeGreatWorkYieldChange(YieldTypes eYield, int iChange)
 		m_aiGreatWorkYieldChange[eYield] = m_aiGreatWorkYieldChange[eYield] + iChange;
 	}
 }
-
+#else
+//	--------------------------------------------------------------------------------
+/// Changes how much additional Yield a Great Work produces
+void CvPlayer::ChangeGreatWorkYieldChange(YieldTypes eYield, int iChange)
+{
+	CvAssertMsg(eYield >= 0, "eIndex is expected to be non-negative (invalid Index)");
+	CvAssertMsg(eYield < NUM_YIELD_TYPES, "eIndex is expected to be within maximum bounds (invalid Index)");
+	for (int iI = 0; iI < GC.getNumGreatWorkClassInfos(); iI++)
+	{
+		ChangeGreatWorkClassYieldChange((GreatWorkClass)iI, eYield, iChange);
+	}
+}
+// --------------------------------------------------------------------------------
+// How much additional Yield from a GreatWorkClass does this player have?
+int CvPlayer::GetGreatWorkClassYieldChange(GreatWorkClass eGreatWorkClass, YieldTypes eYield) const
+{
+	CvAssertMsg(eYield >= 0, "eIndex is expected to be non-negative (invalid Index)");
+	CvAssertMsg(eYield < NUM_YIELD_TYPES, "eIndex is expected to be within maximum bounds (invalid Index)");
+	CvAssertMsg(eGreatWorkClass >= 0, "eIndex is expected to be non-negative (invalid Index)");
+	CvAssertMsg(eGreatWorkClass < GC.getNumGreatWorkClassInfos(), "eIndex is expected to be within maximum bounds (invalid Index)");
+	return m_ppaaiGreatWorkClassYieldChange[eGreatWorkClass][eYield];
+}
+// --------------------------------------------------------------------------------
+// Changes how much additional Yield from a GreatWorkClass does this player have
+void CvPlayer::ChangeGreatWorkClassYieldChange(GreatWorkClass eGreatWorkClass, YieldTypes eYield, int iChange)
+{
+	CvAssertMsg(eYield >= 0, "eIndex is expected to be non-negative (invalid Index)");
+	CvAssertMsg(eYield < NUM_YIELD_TYPES, "eIndex is expected to be within maximum bounds (invalid Index)");
+	CvAssertMsg(eGreatWorkClass >= 0, "eIndex is expected to be non-negative (invalid Index)");
+	CvAssertMsg(eGreatWorkClass < GC.getNumGreatWorkClassInfos(), "eIndex is expected to be within maximum bounds (invalid Index)");
+	if (iChange != 0)
+	{
+		Firaxis::Array<int, NUM_YIELD_TYPES> yields = m_ppaaiGreatWorkClassYieldChange[eGreatWorkClass];
+		yields[eYield] = (m_ppaaiGreatWorkClassYieldChange[eGreatWorkClass][eYield] + iChange);
+		m_ppaaiGreatWorkClassYieldChange.setAt(eGreatWorkClass, yields);
+	}
+	int iLoop;
+	for (CvCity* pLoopCity = firstCity(&iLoop); pLoopCity != NULL; pLoopCity = nextCity(&iLoop))
+	{
+		pLoopCity->GetCityBuildings()->rebuildGreatWorkYields(eGreatWorkClass);
+	}
+}
+#endif
 //	--------------------------------------------------------------------------------
 CvPlot* CvPlayer::getStartingPlot() const
 {
@@ -12197,7 +12378,7 @@ int CvPlayer::GetTotalJONSCulturePerTurnTimes100() const
 	{
 		return 0;
 	}
-
+#if !defined(STANDARDIZE_YIELDS)
 	int iCulturePerTurn = 0;
 
 	// Culture per turn from Cities
@@ -12257,13 +12438,16 @@ int CvPlayer::GetTotalJONSCulturePerTurnTimes100() const
 		CvPlayerTraits* pPlayerTraits = GetPlayerTraits();
 #if defined(LEKMOD_PLAYER_GOLDEN_AGE_YIELD_MOD_INFO)
 		const CvYieldInfo& kYield = *GC.getYieldInfo(YIELD_CULTURE);
-		iCulturePerTurn += ((iCulturePerTurn * (kYield.getPlayerGoldenAgeYieldMod() + pPlayerTraits->GetGoldenAgeCultureModifier())) / 100);
+		iCulturePerTurn += ((iCulturePerTurn * (kYield.getPlayerGoldenAgeYieldMod() + pPlayerTraits->GetGoldenAgeYieldModifier(YIELD_CULTURE))) / 100);
 #else
-		iCulturePerTurn += ((iCulturePerTurn * (GC.getGOLDEN_AGE_CULTURE_MODIFIER() + pPlayerTraits->GetGoldenAgeCultureModifier())) / 100);
+		iCulturePerTurn += ((iCulturePerTurn * (GC.getGOLDEN_AGE_CULTURE_MODIFIER() + pPlayerTraits->GetGoldenAgeYieldModifier(YIELD_CULTURE))) / 100);
 #endif
 #endif // TRAITIFY
 	}
 	return iCulturePerTurn;
+#else
+	return getYieldTimes100(YIELD_CULTURE, false /*bForReligion*/);
+#endif
 }
 
 //	--------------------------------------------------------------------------------
@@ -12271,12 +12455,17 @@ int CvPlayer::GetTotalJONSCulturePerTurnTimes100() const
 int CvPlayer::GetJONSCulturePerTurnFromCities() const
 #ifdef AUI_PLAYER_FIX_JONS_CULTURE_IS_T100
 {
+#if !defined(STANDARDIZE_YIELDS)
 	return GetJONSCulturePerTurnFromCitiesTimes100() / 100;
+#else
+	return getYieldFromCitiesTimes100(YIELD_CULTURE, false /*bIgnoreTrade*/) / 100;
+#endif
 }
 
 int CvPlayer::GetJONSCulturePerTurnFromCitiesTimes100() const
 #endif
 {
+#if !defined(STANDARDIZE_YIELDS)
 	int iCulturePerTurn = 0;
 
 	// Add in culture from Cities
@@ -12296,6 +12485,9 @@ int CvPlayer::GetJONSCulturePerTurnFromCitiesTimes100() const
 	}
 
 	return iCulturePerTurn;
+#else
+	return getYieldFromCitiesTimes100(YIELD_CULTURE, false /*bIgnoreTrade*/);
+#endif
 }
 
 //	--------------------------------------------------------------------------------
@@ -12309,6 +12501,7 @@ int CvPlayer::GetJONSCulturePerTurnFromExcessHappiness() const
 int CvPlayer::GetJONSCulturePerTurnFromExcessHappinessTimes100() const
 #endif
 {
+#if !defined(STANDARDIZE_YIELDS)
 	if(GC.getGame().isOption(GAMEOPTION_NO_HAPPINESS))
 	{
 		return 0;
@@ -12328,12 +12521,16 @@ int CvPlayer::GetJONSCulturePerTurnFromExcessHappinessTimes100() const
 	}
 
 	return 0;
+#else
+	return getYieldFromHappinessTimes100(YIELD_CULTURE);
+#endif
 }
 
 //	--------------------------------------------------------------------------------
 /// Trait bonus which adds Culture for trade partners? 
 int CvPlayer::GetJONSCulturePerTurnFromTraits() const
 {
+#if !defined(STANDARDIZE_YIELDS)
 	// NQMP GJS - Morocco UA Gateway To Africa now scales with era BEGIN TradePartnerYieldFlatBonusPerEra
 	int bonus = GetPlayerTraits()->GetYieldChangePerTradePartner(YIELD_CULTURE);
 	if (bonus > 0) // temp fix since the GetTradePartnerYieldFlatBonusPerEra() stat is currently hard-coded to return 1 instead of reading from SQL
@@ -12344,6 +12541,9 @@ int CvPlayer::GetJONSCulturePerTurnFromTraits() const
 	return bonus;
 	//return GetPlayerTraits()->GetYieldChangePerTradePartner(YIELD_CULTURE) * GetTrade()->GetNumDifferentTradingPartners();
 	// NQMP GJS - Morocco UA Gateway To Africa now scales with era END
+#else
+	return getYieldFromTraitsTimes100(YIELD_CULTURE) / 100;
+#endif
 }
 
 //	--------------------------------------------------------------------------------
@@ -12384,6 +12584,7 @@ void CvPlayer::ChangeJONSCulturePerTurnFromMinorCivs(int /*iChange*/)
 /// Culture per turn from all minor civs
 int CvPlayer::GetCulturePerTurnFromMinorCivs() const
 {
+#if !defined(STANDARDIZE_YIELDS)
 	int iAmount = 0;
 	PlayerTypes eMinor;
 	for(int iMinorLoop = MAX_MAJOR_CIVS; iMinorLoop < MAX_CIV_PLAYERS; iMinorLoop++)
@@ -12393,6 +12594,9 @@ int CvPlayer::GetCulturePerTurnFromMinorCivs() const
 	}
 
 	return iAmount;
+#else
+	return getYieldFromMinorCivsTimes100(YIELD_CULTURE) / 100;
+#endif
 }
 
 //	--------------------------------------------------------------------------------
@@ -12421,6 +12625,7 @@ int CvPlayer::GetCulturePerTurnFromReligion() const
 int CvPlayer::GetCulturePerTurnFromReligionTimes100() const
 #endif
 {
+#if !defined(STANDARDIZE_YIELDS)
 	int iOtherCulturePerTurn = 0;
 	int iReligionCulturePerTurn = 0;
 
@@ -12482,6 +12687,9 @@ int CvPlayer::GetCulturePerTurnFromReligionTimes100() const
 	}
 
 	return 0;
+#else
+	return getYieldFromReligionTimes100(YIELD_CULTURE, getYieldTimes100(YIELD_CULTURE, true));
+#endif
 }
 
 //	--------------------------------------------------------------------------------
@@ -12489,12 +12697,17 @@ int CvPlayer::GetCulturePerTurnFromReligionTimes100() const
 int CvPlayer::GetCulturePerTurnFromBonusTurns() const
 #ifdef AUI_PLAYER_FIX_JONS_CULTURE_IS_T100
 {
+#if !defined(STANDARDIZE_YIELDS)
 	return GetCulturePerTurnFromBonusTurnsTimes100() / 100;
+#else
+	return 0;
+#endif
 }
 
 int CvPlayer::GetCulturePerTurnFromBonusTurnsTimes100() const
 #endif
 {
+#if !defined(STANDARDIZE_YIELDS)
 	int iValue = 0;
 
 	if (GetCultureBonusTurns() > 0)
@@ -12522,6 +12735,9 @@ int CvPlayer::GetCulturePerTurnFromBonusTurnsTimes100() const
 	}
 
 	return iValue;
+#else
+	return 0;
+#endif
 }
 
 //	--------------------------------------------------------------------------------
@@ -12738,13 +12954,18 @@ int CvPlayer::GetJONSCulturePerCityPerTurn() const
 /// Amount of extra Culture per Wonder
 int CvPlayer::GetCulturePerWonder() const
 {
+#if !defined(LEKMOD_EXPERIMENTAL_CHANGES)
 	return m_iCulturePerWonder;
+#else
+	return GetWorldWonderYieldChanges(YIELD_CULTURE);
+#endif
 }
 
 //	--------------------------------------------------------------------------------
 /// Changes amount of extra Culture per Wonder
 void CvPlayer::ChangeCulturePerWonder(int iChange)
 {
+#if !defined(LEKMOD_EXPERIMENTAL_CHANGES)
 	if(iChange != 0)
 	{
 		m_iCulturePerWonder += iChange;
@@ -12764,6 +12985,9 @@ void CvPlayer::ChangeCulturePerWonder(int iChange)
 #endif
 		}
 	}
+#else
+	ChangeWorldWonderYieldChanges(YIELD_CULTURE, iChange);
+#endif
 }
 
 //	--------------------------------------------------------------------------------
@@ -12894,7 +13118,26 @@ int CvPlayer::GetCultureYieldFromPreviousTurns(int iGameTurn, int iNumPreviousTu
 
 	return iSum;
 }
-
+#if defined(STANDARDIZE_YIELDS)
+int CvPlayer::GetTotalYieldEverGeneratedTimes100(YieldTypes eYield) const
+{
+	return m_aiYieldEverGeneratedTimes100[eYield];
+}
+void CvPlayer::ChangeTotalYieldEverGeneratedTimes100(YieldTypes eYield, int iChange)
+{
+	if (iChange != 0)
+	{
+		SetTotalYieldEverGeneratedTimes100(eYield, GetTotalYieldEverGeneratedTimes100(eYield) + iChange);
+	}
+}
+void CvPlayer::SetTotalYieldEverGeneratedTimes100(YieldTypes eYield, int iChange)
+{
+	if (iChange != 0)
+	{
+		m_aiYieldEverGeneratedTimes100.setAt(eYield, iChange);
+	}
+}
+#endif
 /// Cities remaining to get free Gardens
 int CvPlayer::GetNumCitiesFreePietyGardens() const
 {
@@ -13231,7 +13474,7 @@ void CvPlayer::DoYieldBonusFromKill(YieldTypes eYield, CvUnit* pAttackingUnit, C
 #endif
 	if (pkKilledUnitInfo)
 	{
-		int iCombatStrength = max(pkKilledUnitInfo->GetCombat(), pkKilledUnitInfo->GetRangedCombat());
+		int iCombatStrength = max(pKilledUnit->GetBaseCombatStrength(), pKilledUnit->GetBaseRangedCombatStrength());
 		if (iCombatStrength > 0)
 		{
 			int iPolicyValue = 0;
@@ -13291,20 +13534,40 @@ void CvPlayer::DoYieldBonusFromKill(YieldTypes eYield, CvUnit* pAttackingUnit, C
 				}
 			}
 
+			// Global Defines caps (POLICY/TRAIT/BELIEF/PROMOTION/UNIT_YIELD_CAP).
+			// Per-row <Max> on *_YieldFromKills overrides the matching global when > 0.
 			int iPolicyCap = GC.getPOLICY_YIELD_CAP();
+			int iPolicyMax = GetPlayerPolicies()->GetYieldFromKillsMax(eYield);
+			if (iPolicyMax > 0)
+				iPolicyCap = iPolicyMax;
+
 			int iTraitCap = GC.getTRAIT_YIELD_CAP();
+			int iTraitMax = GetPlayerTraits()->GetYieldFromKillsMax(eYield);
+			if (iTraitMax > 0)
+				iTraitCap = iTraitMax;
+
 			int iBeliefCap = GC.getBELIEF_YIELD_CAP();
-			int iPromotionCap = GC.getPROMOTION_YIELD_CAP(); 
+
+			int iPromotionCap = GC.getPROMOTION_YIELD_CAP();
 			if (pAttackingUnit != NULL)
 			{
 				int iCapFromPromotions = pAttackingUnit->GetKillYieldCap(eYield);
-				if(iCapFromPromotions > 0)
-					iPromotionCap += iCapFromPromotions;
+				if (iCapFromPromotions > 0)
+					iPromotionCap = iCapFromPromotions;
 			}
+
 			int iUnitCap = GC.getUNIT_YIELD_CAP();
-			// Ok so EAP has requested a different System. 
-			// NQMP GJS - Cap Yields from kills to 30 per type (policy/trait/belief/other)
-			// Expanding on GJS's cap. Make them Global Integers, and use them to cap the values. 
+			if (eAttackingUnitType != NO_UNIT)
+			{
+				CvUnitEntry* pkAttackingUnitInfo = GC.getUnitInfo(eAttackingUnitType);
+				if (pkAttackingUnitInfo)
+				{
+					int iUnitMax = pkAttackingUnitInfo->GetYieldFromKillsMax(eYield);
+					if (iUnitMax > 0)
+						iUnitCap = iUnitMax;
+				}
+			}
+
 			if (iPolicyCap > 0)
 				iPolicyValue = min((iPolicyValue * iCombatStrength) / 100, iPolicyCap);
 			else 
@@ -13400,8 +13663,14 @@ void CvPlayer::DoYieldBonusFromKill(YieldTypes eYield, CvUnit* pAttackingUnit, C
 					ChangeGoldenAgeProgressMeter(iTotalValue);
 					// Consider making this push us into a GA if we reach the Threshold, but Currently that is just worse than waiting.
 					break;
-				}
 #endif
+#if defined(LEK_YIELD_TOURISM)
+				case YIELD_TOURISM:
+					GetCulture()->ChangeInfluenceOn(pKilledUnit->getOwner(), iTotalValue);
+					break;
+#endif
+				}
+
 				iNumBonuses++;
 				ReportYieldFromKill(eYield, iTotalValue, iX, iY, iNumBonuses);
 			}
@@ -13527,8 +13796,14 @@ void CvPlayer::DoYieldBonusFromConversion(YieldTypes eYield, CvUnit* pConverting
 			ChangeGoldenAgeProgressMeter(iTotalValue);
 			// Consider making this push us into a GA if we reach the Threshold, but Currently that is just worse than waiting.
 			break;
-		}
 #endif
+#if defined(LEK_YIELD_TOURISM)
+		case YIELD_TOURISM:
+			GetCulture()->ChangeInfluenceOn(pPressuredCity->getOwner(), iTotalValue);
+			break;
+#endif
+		}
+
 		iNumBonuses++;
 		ReportYieldFromKill(eYield, iTotalValue, iX, iY, iNumBonuses);
 #if defined(LEKMOD_PROMO_CONVERSION_MAJORITY_ONLY_ONCE)
@@ -13621,9 +13896,14 @@ void CvPlayer::ReportYieldFromKill(YieldTypes eYield, int iValue, int iX, int iY
 		case YIELD_SCIENCE:
 			yieldString = "[COLOR_BLUE]+%d[ENDCOLOR][ICON_RESEARCH]";
 			break;
-#if defined(FULL_YIELD_FROM_KILLS) // Add Golden Age points for Kills
+#if defined(FULL_YIELD_FROM_KILLS) && defined(LEKMOD_v34) // Add Golden Age points for Kills, GAP is only a Yield if v34 is defined
 		case YIELD_GOLDEN_AGE_POINTS:
 			yieldString = "[COLOR_WHITE]+%d[ENDCOLOR][ICON_GOLDEN_AGE]";
+			break;
+#endif
+#if defined(LEK_YIELD_TOURISM)
+			case YIELD_TOURISM:
+			yieldString = "[COLOR_CYAN]+%d[ENDCOLOR][ICON_TOURISM]";
 			break;
 #endif
 		default:
@@ -17867,8 +18147,13 @@ void CvPlayer::SetGreatGeneralCombatBonus(int iValue)
 {
 	m_iGreatGeneralCombatBonus = iValue;
 }
-
-
+#if defined(LEKMOD_COMBAT_PREDICTOR_IMPROVEMENTS)
+//////////////////////////////////////////////////////////////////////////
+void CvPlayer::ChangeGreatGeneralCombatBonus(int iChange)
+{
+	SetGreatGeneralCombatBonus(GetGreatGeneralCombatBonus() + iChange);
+}
+#endif
 //////////////////////////////////////////////////////////////////////////
 // ***** Great People Spawning *****
 //////////////////////////////////////////////////////////////////////////
@@ -18435,7 +18720,7 @@ void CvPlayer::ChangePolicyCostMinorCivModifier(int iChange)
 {
 	m_iPolicyCostMinorCivModifier = (m_iPolicyCostMinorCivModifier + iChange);
 }
-
+#if !defined(LEK_YIELD_TOURISM)
 //	--------------------------------------------------------------------------------
 int CvPlayer::GetInfluenceSpreadModifier() const
 {
@@ -18447,7 +18732,7 @@ void CvPlayer::ChangeInfluenceSpreadModifier(int iChange)
 {
 	m_iInfluenceSpreadModifier = (m_iInfluenceSpreadModifier + iChange);
 }
-
+#endif
 //	--------------------------------------------------------------------------------
 int CvPlayer::GetExtraVotesPerDiplomat() const
 {
@@ -18731,6 +19016,19 @@ int CvPlayer::GetNumMaintenanceFreeUnits(DomainTypes eDomain, bool bOnlyCombatUn
 		{
 			iNumFreeUnits++;
 		}
+#if defined(LEKMOD_GARRISON_YIELD_EFFECTS) // Maintenance Free Garrison check for buildings that make the city garrison Maintenance free
+		else if (pLoopUnit->IsGarrisoned())
+		{
+			CvCity* pGarrisonedCity = pLoopUnit->plot()->getPlotCity();
+			if (pGarrisonedCity != NULL)
+			{
+				if (pGarrisonedCity->GetCityBuildings()->IsGarrisonMaintenanceFree())
+				{
+					iNumFreeUnits++;
+				}
+			}
+		}
+#endif
 	}
 
 	return iNumFreeUnits;
@@ -19432,14 +19730,6 @@ bool CvPlayer::IsAbleToAnnexCityStates() const
 int CvPlayer::GetNumTurnsBeforeMinorAlliesRefuseBribes() const
 {
 	return GetPlayerTraits()->GetNumTurnsBeforeMinorAlliesRefuseBribes();
-}
-#endif
-
-#ifdef NQ_GOLDEN_PILGRIMAGE
-//	--------------------------------------------------------------------------------
-int CvPlayer::GetGoldenAgeTileBonusFaith() const
-{
-	return GetPlayerTraits()->GetGoldenAgeTileBonusFaith();
 }
 #endif
 
@@ -21801,7 +22091,214 @@ void CvPlayer::updateExtraYieldThreshold(YieldTypes eIndex)
 		updateYield();
 	}
 }
+#if defined(STANDARDIZE_YIELDS)
+int CvPlayer::getYieldTimes100(YieldTypes eYield, bool bForReligion) const
+{
+	int yield = 0;
+	const CvYieldInfo& kYield = *GC.getYieldInfo(eYield);
+	// Flat Yields
+	yield += getYieldFromCitiesTimes100(eYield, false);
+	yield += getYieldFromOtherPlayersTimes100(eYield);
+	yield += getYieldFromHappinessTimes100(eYield);
+	yield += getYieldFromTraitsTimes100(eYield);
+	if (bForReligion)
+		return yield;
+	yield += getYieldFromReligionTimes100(eYield, yield);
 
+	if (GetCultureBonusTurns() > 0 && YIELD_CULTURE == eYield) // World's Fair
+	{
+		yield *= (100 + GC.getTEMPORARY_CULTURE_BOOST_MOD());
+		yield /= 100;
+	}
+
+	int iModifier = 100;
+	if (isGoldenAge())
+	{
+#if defined(LEKMOD_PLAYER_GOLDEN_AGE_YIELD_MOD_INFO)
+		iModifier += kYield.getPlayerGoldenAgeYieldMod();
+#else
+		iModifier += GC.getGOLDEN_AGE_CULTURE_MODIFIER();
+#endif
+	}
+	yield *= iModifier;
+	yield /= 100;
+	// Don't apply modifiers to Minor Civ bonuses.
+	yield += getYieldPenaltiesTimes100(eYield);
+	yield += getYieldFromMinorCivsTimes100(eYield);
+
+	return yield;
+}
+int CvPlayer::getYieldFromCitiesTimes100(YieldTypes eYield, bool bIgnoreTrade) const
+{
+	int yield = 0;
+	const CvCity* pLoopCity;
+	int iLoop;
+	for (pLoopCity = firstCity(&iLoop); pLoopCity != NULL; pLoopCity = nextCity(&iLoop))
+	{
+		yield += pLoopCity->getYieldRateTimes100(eYield, bIgnoreTrade);
+	}
+
+	return yield;
+}
+int CvPlayer::getYieldFromOtherPlayersTimes100(YieldTypes eYield) const
+{
+	int yield = 0;
+	// Just Research Agreements, for now.
+	if (YIELD_SCIENCE == eYield)
+	{
+		int iScience = getYieldFromCitiesTimes100(eYield, false);
+
+		int iResearchAgreementBonus = /*0*/ GC.getRESEARCH_AGREEMENT_MOD() * GET_TEAM(getTeam()).GetTotalNumResearchAgreements(); // RAs currently do not have this effect
+		iScience *= iResearchAgreementBonus;	// Apply to the % to the current value
+		iScience /= 100;
+		yield += iScience;
+	}
+
+	return yield;
+
+}
+int CvPlayer::getYieldFromHappinessTimes100(YieldTypes eYield) const
+{
+	if (GC.getGame().isOption(GAMEOPTION_NO_HAPPINESS))
+	{
+		return 0;
+	}
+	int iExcessHappiness = GetExcessHappiness();
+	switch (eYield)
+	{
+	case YIELD_SCIENCE:
+		if (iExcessHappiness >= 0) // Happy? Get a Modifier.
+		{
+			int iFreeScience = getYieldFromCitiesTimes100(eYield, false) * getHappinessToScience();
+			iFreeScience /= 100;
+			return iFreeScience;
+		}
+	break;
+	case YIELD_CULTURE:
+		if (iExcessHappiness > 0) // Convert excess happiness to culture, if any.
+		{
+			int iFreeCulture = (iExcessHappiness * getHappinessToCulture());
+			return iFreeCulture;
+		}
+	break;
+	case YIELD_GOLDEN_AGE_POINTS:
+	{
+		return iExcessHappiness * 100; // 1 point per excess happiness, inverted if unhappy.
+	}
+	default:
+		return 0;
+		break;
+	}
+	return 0;
+}
+int CvPlayer::getYieldPenaltiesTimes100(YieldTypes eYield) const
+{
+	if (YIELD_SCIENCE != eYield)
+		return 0;
+	int iGoldPerTurn = calculateGoldRateTimes100();
+	int iScience = 0;
+	if (GetTreasury()->GetGoldTimes100() + iGoldPerTurn < 0)
+	{
+		iScience += (GetTreasury()->GetGoldTimes100() + iGoldPerTurn);
+	}
+	return iScience;
+}
+int CvPlayer::getYieldFromMinorCivsTimes100(YieldTypes eYield) const
+{
+	int yield = 0;
+	PlayerTypes ePlayer;
+	for (int iPlayerLoop = MAX_MAJOR_CIVS; iPlayerLoop < MAX_CIV_PLAYERS; iPlayerLoop++)
+	{
+		ePlayer = static_cast<PlayerTypes>(iPlayerLoop);
+		const CvPlayer& kMinor = GET_PLAYER(ePlayer);
+		if (!kMinor.isAlive() || !kMinor.isMinorCiv())
+			continue;
+		switch (eYield)
+		{
+			case YIELD_SCIENCE:
+				yield += kMinor.GetMinorCivAI()->GetCurrentScienceFriendshipBonusTimes100(GetID());
+			case YIELD_CULTURE:
+				yield += GetCulturePerTurnFromMinor(ePlayer) * 100;
+				break;
+			case YIELD_FAITH:
+				yield += GetFaithPerTurnFromMinor(ePlayer) * 100;
+				break;
+		}
+	}
+	
+	return yield;
+}
+int CvPlayer::getYieldFromTraitsTimes100(YieldTypes eYield) const
+{
+	int iYield = GetPlayerTraits()->GetYieldChangePerTradePartnerByDomain(DOMAIN_LAND, eYield); // This is set to LAND, since the SEA one is for display purposes.
+	if (iYield > 0)
+	{
+		iYield += GetPlayerTraits()->GetTradePartnerYieldFlatBonusPerEra(eYield) * GetCurrentEra();
+		iYield *= GetTrade()->GetNumDifferentTradingPartners();
+	}
+	return iYield;
+}
+int CvPlayer::getYieldFromReligionTimes100(YieldTypes eYield, int iPrevTotal) const
+{
+	int rtnValue = 0;
+	// Founder beliefs
+	CvGameReligions* pReligions = GC.getGame().GetGameReligions();
+	ReligionTypes eFoundedReligion = pReligions->GetFounderBenefitsReligion(GetID());
+	if (eFoundedReligion != NO_RELIGION)
+	{
+		const CvReligion* pReligion = pReligions->GetReligion(eFoundedReligion, NO_PLAYER);
+		if (pReligion)
+		{
+			rtnValue += pReligion->m_Beliefs.GetHolyCityYieldChange(eYield);
+
+			int iTemp = pReligion->m_Beliefs.GetYieldChangePerForeignCity(eYield);
+			if (iTemp > 0)
+			{
+				rtnValue += (iTemp * GetReligions()->GetNumForeignCitiesFollowing());
+			}
+#if defined(LEKMOD_BELIEF_YIELDIFY)
+			iTemp = pReligion->m_Beliefs.GetYieldChangePerFollowingCity(eYield);
+			if (iTemp > 0)
+			{
+				rtnValue += (iTemp * pReligions->GetNumCitiesFollowing(eFoundedReligion));
+			}
+#endif
+#if defined(LEK_CULTURE_SCIENCE_SPREAD_BELIEFS_ALL_CITIES)
+			iTemp = pReligion->m_Beliefs.GetYieldChangePerXFollowers(eYield);
+			if (iTemp > 0)
+			{
+				int iFollowers = pReligions->GetNumFollowers(eFoundedReligion);
+				if (iFollowers > 0)
+				{
+					rtnValue += (iFollowers / iTemp);
+				}
+			}
+#endif
+			iTemp = pReligion->m_Beliefs.GetYieldChangePerXForeignFollowers(eYield);
+			if (iTemp > 0)
+			{
+				int iFollowers = GetReligions()->GetNumForeignFollowers(false /*bAtPeace*/);
+				if (iFollowers > 0)
+				{
+					rtnValue += (iFollowers / iTemp);
+				}
+			}
+			rtnValue *= 100;
+			bool bAtPeace = GET_TEAM(getTeam()).getAtWarCount(false) == 0;
+#if !defined(LEKMOD_BELIEF_YIELDIFY)
+			int iMod = pReligion->m_Beliefs.GetPlayerCultureModifier(bAtPeace);
+#else 
+			int iMod = pReligion->m_Beliefs.GetPlayerYieldModifier(eYield, bAtPeace);
+#endif
+			if (iMod != 0)
+			{
+				rtnValue += (rtnValue + iPrevTotal) * iMod / 100;
+			}
+		}
+	}
+	return rtnValue;
+}
+#endif
 //	--------------------------------------------------------------------------------
 int CvPlayer::GetScience() const
 {
@@ -24226,7 +24723,6 @@ void CvPlayer::changeImprovementYieldChange(ImprovementTypes eIndex1, YieldTypes
 		updateYield();
 	}
 }
-
 //	--------------------------------------------------------------------------------
 bool CvPlayer::removeFromArmy(int iArmyID, int iID)
 {
@@ -26737,6 +27233,11 @@ void CvPlayer::processPolicies(PolicyTypes ePolicy, int iChange)
 		iMod = pPolicy->GetSpecialistExtraYield(iI) * iChange;
 		if(iMod != 0)
 			changeSpecialistExtraYield(eYield, iMod);
+#if defined(LEKMOD_EXPERIMENTAL_CHANGES)
+		iMod = pPolicy->GetWorldWonderYieldChange(iI) * iChange;
+		if (iMod != 0)
+			ChangeWorldWonderYieldChanges(eYield, iMod);
+#endif
 	}
 #if defined(LEKMOD_v34) // Grant free resources from this policy
 	for (int i = 0; i < GC.getNumResourceInfos(); ++i)
@@ -27157,7 +27658,7 @@ void CvPlayer::processPolicies(PolicyTypes ePolicy, int iChange)
 				{
 					eYield = (YieldTypes)iJ;
 					iYieldMod = pPolicy->GetBuildingClassYieldModifiers(eBuildingClass, eYield);
-					if (iYieldMod > 0)
+					if (iYieldMod != 0)
 					{
 						pLoopCity->changeYieldRateModifier(eYield, iYieldMod * iBuildingCount * iChange);
 					}
@@ -27166,6 +27667,13 @@ void CvPlayer::processPolicies(PolicyTypes ePolicy, int iChange)
 					{
 						pLoopCity->ChangeBaseYieldRateFromBuildings(eYield, iYieldChange * iBuildingCount * iChange);
 					}
+#if defined(LEKMOD_EXPERIMENTAL_CHANGES)// World Wonder Yield Change
+					iYieldChange = pPolicy->GetWorldWonderYieldChange(eYield);
+					if (iYieldChange != 0 && ::isWorldWonderClass(*pkBuildingClassInfo))
+					{
+						pLoopCity->ChangeBaseYieldRateFromBuildings(eYield, iYieldChange * iBuildingCount * iChange);
+					}
+#endif
 				}
 #endif
 			}
@@ -27841,7 +28349,9 @@ void CvPlayer::Read(FDataStream& kStream)
 	kStream >> m_iJONSCulture;
 	kStream >> m_iJONSCultureEverGenerated;
 #endif
+#if !defined(LEKMOD_EXPERIMENTAL_CHANGES)
 	kStream >> m_iCulturePerWonder;
+#endif
 	kStream >> m_iCultureWonderMultiplier;
 	kStream >> m_iCulturePerTechResearched;
 	kStream >> m_iFaith;
@@ -28034,7 +28544,9 @@ void CvPlayer::Read(FDataStream& kStream)
 	kStream >> m_iUnitProductionMaintenanceMod;
 	kStream >> m_iPolicyCostBuildingModifier;
 	kStream >> m_iPolicyCostMinorCivModifier;
+#if !defined(LEK_YIELD_TOURISM)
 	kStream >> m_iInfluenceSpreadModifier;
+#endif
 	if (uiVersion >= 15)
 	{
 		kStream >> m_iExtraVotesPerDiplomat;
@@ -28094,6 +28606,9 @@ void CvPlayer::Read(FDataStream& kStream)
 #endif
 #ifdef NQ_ALLOW_PUPPET_PURCHASING_FROM_POLICIES
 	kStream >> m_iAllowPuppetPurchasingCount;
+#endif
+#if defined(LEKMOD_GREAT_FIREWALL_PLAYER_EFFECT)
+	kStream >> m_iInfluenceNullificationCount;
 #endif
 	if (uiVersion >= 3)
 	{
@@ -28251,6 +28766,12 @@ void CvPlayer::Read(FDataStream& kStream)
 #endif
 	kStream >> m_eID;
 	kStream >> m_ePersonalityType;
+#if defined(LEKMOD_EXPERIMENTAL_CHANGES)
+	kStream >> m_aiWorldWonderYieldChanges;
+#endif
+#if defined(STANDARDIZE_YIELDS)
+	kStream >> m_aiYieldEverGeneratedTimes100;
+#endif
 	kStream >> m_aiCityYieldChange;
 	kStream >> m_aiCoastalCityYieldChange;
 	kStream >> m_aiCapitalYieldChange;
@@ -28306,13 +28827,10 @@ void CvPlayer::Read(FDataStream& kStream)
 	CvInfosSerializationHelper::ReadHashedDataArray(kStream, m_paiNumResourceUsed.dirtyGet());
 	CvInfosSerializationHelper::ReadHashedDataArray(kStream, m_paiNumResourceTotal.dirtyGet());
 #ifdef LEKMOD_CS_BUILDING_STRATEGIC_NO_ALLY_SHARE
-	
 	CvInfosSerializationHelper::ReadHashedDataArray(kStream, m_paiMinorStrategicResourceFromBuildings.dirtyGet());
 #else
-	
 	std::vector<int> vDiscardMinorStrategicFromBuildings;
 	CvInfosSerializationHelper::ReadHashedDataArray(kStream, vDiscardMinorStrategicFromBuildings);
-	
 #endif
 	CvInfosSerializationHelper::ReadHashedDataArray(kStream, m_paiResourceGiftedToMinors.dirtyGet());
 	CvInfosSerializationHelper::ReadHashedDataArray(kStream, m_paiResourceExport.dirtyGet());
@@ -28378,13 +28896,21 @@ void CvPlayer::Read(FDataStream& kStream)
 	m_pBuilderTaskingAI->Read(kStream);
 	m_pCityConnections->Read(kStream);
 	m_pDangerPlots->Read(kStream);
+	{ FILogFile* pDbg = LOGFILEMGR.GetLog("LoadDebug.log", FILogFile::kDontTimeStamp); pDbg->Msg("Player %d: before Traits used=%u", GetID(), kStream.GetSizeLeft()); }
 	m_pTraits->Read(kStream);
+	{ FILogFile* pDbg = LOGFILEMGR.GetLog("LoadDebug.log", FILogFile::kDontTimeStamp); pDbg->Msg("Player %d: after Traits used=%u", GetID(), kStream.GetSizeLeft()); }
 	kStream >> *m_pEspionage;
+	{ FILogFile* pDbg = LOGFILEMGR.GetLog("LoadDebug.log", FILogFile::kDontTimeStamp); pDbg->Msg("Player %d: after Espionage used=%u", GetID(), kStream.GetSizeLeft()); }
 	kStream >> *m_pEspionageAI;
+	{ FILogFile* pDbg = LOGFILEMGR.GetLog("LoadDebug.log", FILogFile::kDontTimeStamp); pDbg->Msg("Player %d: after EspionageAI used=%u", GetID(), kStream.GetSizeLeft()); }
 	kStream >> *m_pTrade;
+	{ FILogFile* pDbg = LOGFILEMGR.GetLog("LoadDebug.log", FILogFile::kDontTimeStamp); pDbg->Msg("Player %d: after Trade used=%u", GetID(), kStream.GetSizeLeft()); }
 	kStream >> *m_pTradeAI;
+	{ FILogFile* pDbg = LOGFILEMGR.GetLog("LoadDebug.log", FILogFile::kDontTimeStamp); pDbg->Msg("Player %d: after TradeAI used=%u", GetID(), kStream.GetSizeLeft()); }
 	m_pLeagueAI->Read(kStream);
+	{ FILogFile* pDbg = LOGFILEMGR.GetLog("LoadDebug.log", FILogFile::kDontTimeStamp); pDbg->Msg("Player %d: after LeagueAI used=%u, about to read Culture", GetID(), kStream.GetSizeLeft()); }
 	kStream >> *m_pCulture;
+	{ FILogFile* pDbg = LOGFILEMGR.GetLog("LoadDebug.log", FILogFile::kDontTimeStamp); pDbg->Msg("Player %d: after Culture used=%u", GetID(), kStream.GetSizeLeft()); }
 
 	bool bReadNotifications;
 	kStream >> bReadNotifications;
@@ -28407,9 +28933,14 @@ void CvPlayer::Read(FDataStream& kStream)
 			m_pFlavorManager->AddFlavorRecipient(m_pWonderProductionAI, false /*bPropogateFlavors*/);
 		}
 	}
-
+#if defined(LEKMOD_GREAT_WORK_YIELD_EFFECTS)
+	kStream >> m_ppaaiGreatWorkClassYieldChange;
+#endif
 	kStream >> m_ppaaiSpecialistExtraYield;
 	kStream >> m_ppaaiImprovementYieldChange;
+#if defined(STANDARDIZE_YIELDS)
+	kStream >> m_aBuildingYieldChangeCache;
+#endif
 
 	kStream >> m_UnitCycle;
 	kStream >> m_researchQueue;
@@ -28547,7 +29078,9 @@ void CvPlayer::Write(FDataStream& kStream) const
 	kStream << m_iJONSCulture;
 	kStream << m_iJONSCultureEverGenerated;
 #endif
+#if !defined(LEKMOD_EXPERIMENTAL_CHANGES)
 	kStream << m_iCulturePerWonder;
+#endif
 	kStream << m_iCultureWonderMultiplier;
 	kStream << m_iCulturePerTechResearched;
 	kStream << m_iFaith;
@@ -28704,7 +29237,9 @@ void CvPlayer::Write(FDataStream& kStream) const
 	kStream << m_iUnitProductionMaintenanceMod;
 	kStream << m_iPolicyCostBuildingModifier;		// Added in version 3
 	kStream << m_iPolicyCostMinorCivModifier;
+#if !defined(LEK_YIELD_TOURISM)
 	kStream << m_iInfluenceSpreadModifier;
+#endif
 	kStream << m_iExtraVotesPerDiplomat;
 	kStream << m_iNumNukeUnits;
 	kStream << m_iNumOutsideUnits;
@@ -28751,7 +29286,9 @@ void CvPlayer::Write(FDataStream& kStream) const
 #ifdef NQ_ALLOW_PUPPET_PURCHASING_FROM_POLICIES
 	kStream << m_iAllowPuppetPurchasingCount;
 #endif
-
+#if defined(LEKMOD_GREAT_FIREWALL_PLAYER_EFFECT)
+	kStream << m_iInfluenceNullificationCount;
+#endif
 	kStream << m_iEnablesSSPartPurchaseCount;
 	kStream << m_iConscriptCount;
 	kStream << m_iMaxConscript;
@@ -28870,7 +29407,12 @@ void CvPlayer::Write(FDataStream& kStream) const
 
 	kStream << m_eID;
 	kStream << m_ePersonalityType;
-
+#if defined(LEKMOD_EXPERIMENTAL_CHANGES)
+	kStream << m_aiWorldWonderYieldChanges;
+#endif
+#if defined(STANDARDIZE_YIELDS)
+	kStream << m_aiYieldEverGeneratedTimes100;
+#endif
 	kStream << m_aiCityYieldChange;
 	kStream << m_aiCoastalCityYieldChange;
 	kStream << m_aiCapitalYieldChange;
@@ -28898,6 +29440,9 @@ void CvPlayer::Write(FDataStream& kStream) const
 	CvInfosSerializationHelper::WriteHashedDataArray<ResourceTypes, int>(kStream, m_paiNumResourceTotal);
 #ifdef LEKMOD_CS_BUILDING_STRATEGIC_NO_ALLY_SHARE
 	CvInfosSerializationHelper::WriteHashedDataArray<ResourceTypes, int>(kStream, m_paiMinorStrategicResourceFromBuildings);
+#else
+	std::vector<int> vDiscardMinorStrategicFromBuildings;
+	CvInfosSerializationHelper::WriteHashedDataArray<ResourceTypes, int>(kStream, vDiscardMinorStrategicFromBuildings);
 #endif
 	CvInfosSerializationHelper::WriteHashedDataArray<ResourceTypes, int>(kStream, m_paiResourceGiftedToMinors);
 	CvInfosSerializationHelper::WriteHashedDataArray<ResourceTypes, int>(kStream, m_paiResourceExport);
@@ -28960,13 +29505,21 @@ void CvPlayer::Write(FDataStream& kStream) const
 	m_pBuilderTaskingAI->Write(kStream);
 	m_pCityConnections->Write(kStream);
 	m_pDangerPlots->Write(kStream);
+	{ FILogFile* pDbg = LOGFILEMGR.GetLog("SaveDebug.log", FILogFile::kDontTimeStamp); pDbg->Msg("Player %d: before Traits used=%u", GetID(), kStream.GetSizeLeft()); }
 	m_pTraits->Write(kStream);
+	{ FILogFile* pDbg = LOGFILEMGR.GetLog("SaveDebug.log", FILogFile::kDontTimeStamp); pDbg->Msg("Player %d: after Traits used=%u", GetID(), kStream.GetSizeLeft()); }
 	kStream << *m_pEspionage;
+	{ FILogFile* pDbg = LOGFILEMGR.GetLog("SaveDebug.log", FILogFile::kDontTimeStamp); pDbg->Msg("Player %d: after Espionage used=%u", GetID(), kStream.GetSizeLeft()); }
 	kStream << *m_pEspionageAI;
+	{ FILogFile* pDbg = LOGFILEMGR.GetLog("SaveDebug.log", FILogFile::kDontTimeStamp); pDbg->Msg("Player %d: after EspionageAI used=%u", GetID(), kStream.GetSizeLeft()); }
 	kStream << *m_pTrade;
+	{ FILogFile* pDbg = LOGFILEMGR.GetLog("SaveDebug.log", FILogFile::kDontTimeStamp); pDbg->Msg("Player %d: after Trade used=%u", GetID(), kStream.GetSizeLeft()); }
 	kStream << *m_pTradeAI;
+	{ FILogFile* pDbg = LOGFILEMGR.GetLog("SaveDebug.log", FILogFile::kDontTimeStamp); pDbg->Msg("Player %d: after TradeAI used=%u", GetID(), kStream.GetSizeLeft()); }
 	m_pLeagueAI->Write(kStream);
+	{ FILogFile* pDbg = LOGFILEMGR.GetLog("SaveDebug.log", FILogFile::kDontTimeStamp); pDbg->Msg("Player %d: after LeagueAI used=%u, about to write Culture", GetID(), kStream.GetSizeLeft()); }
 	kStream << *m_pCulture;
+	{ FILogFile* pDbg = LOGFILEMGR.GetLog("SaveDebug.log", FILogFile::kDontTimeStamp); pDbg->Msg("Player %d: after Culture used=%u", GetID(), kStream.GetSizeLeft()); }
 
 	if(m_pNotifications)
 	{
@@ -28978,9 +29531,14 @@ void CvPlayer::Write(FDataStream& kStream) const
 		kStream << false;
 	}
 	m_pTreasury->Write(kStream);
-
+#if defined(LEKMOD_GREAT_WORK_YIELD_EFFECTS)
+	kStream << m_ppaaiGreatWorkClassYieldChange;
+#endif
 	kStream << m_ppaaiSpecialistExtraYield;
 	kStream << m_ppaaiImprovementYieldChange;
+#if defined(STANDARDIZE_YIELDS)
+	kStream << m_aBuildingYieldChangeCache;
+#endif
 
 	kStream << m_UnitCycle;
 	kStream << m_researchQueue;
@@ -29239,7 +29797,102 @@ void CvPlayer::invalidateYieldRankCache(YieldTypes)
 //	--------------------------------------------------------------------------------
 void CvPlayer::doUpdateCacheOnTurn()
 {
+	// Build the AreaYield every turn, better than looping though Cities*Cities times to get the same information.
+#if defined(LEKMOD_AREA_BASED_CITY_YIELD)
+	struct AreaYieldEntry
+	{
+		int iArea;
+		int aiSame[NUM_YIELD_TYPES];
+		int aiDifferent[NUM_YIELD_TYPES];
 
+		AreaYieldEntry()
+		{
+			iArea = -1;
+			for (int iYield = 0; iYield < NUM_YIELD_TYPES; iYield++)
+			{
+				aiSame[iYield] = 0;
+				aiDifferent[iYield] = 0;
+			}
+		}
+	};
+
+	std::vector<AreaYieldEntry> areaYields;
+	int aiDifferentTotal[NUM_YIELD_TYPES] = {};
+	
+	int iLoop;
+	YieldTypes eYield;
+	CvCity* pLoopCity;
+	CvCityBuildings* pCityBuildings;
+	for (pLoopCity = firstCity(&iLoop); pLoopCity != NULL; pLoopCity = nextCity(&iLoop))
+	{
+		pCityBuildings = pLoopCity->GetCityBuildings();
+		if (!pCityBuildings)
+			continue;
+		const int iArea = pLoopCity->getArea();
+		AreaYieldEntry* pEntry = NULL;
+		// Do we already have an entry for this area?
+		for (size_t i = 0; i < areaYields.size(); i++)
+		{
+			if (areaYields[i].iArea == iArea)
+			{
+				pEntry = &areaYields[i];
+				break;
+			}
+		}
+		// If not, add one
+		if (pEntry == NULL)
+		{
+			AreaYieldEntry kNewEntry;
+			kNewEntry.iArea = iArea;
+			areaYields.push_back(kNewEntry);
+			pEntry = &areaYields.back();
+		}
+		// Add the yields from this city to the area entry
+		for (int iYield = 0; iYield < NUM_YIELD_TYPES; iYield++)
+		{
+			YieldTypes eYield = static_cast<YieldTypes>(iYield);
+
+			const int iSame = pCityBuildings->GetSameLandMassYieldChange(eYield);
+			const int iDifferent = pCityBuildings->GetDifferentLandMassYieldChange(eYield);
+
+			pEntry->aiSame[iYield] += iSame;
+			pEntry->aiDifferent[iYield] += iDifferent;
+
+			aiDifferentTotal[iYield] += iDifferent;
+		}
+	}
+	// now go over the areas
+	CvArea* pLoopArea;
+	CvMap& kMap = GC.getMap();
+	for (pLoopArea = kMap.firstArea(&iLoop); pLoopArea != NULL; pLoopArea = kMap.nextArea(&iLoop))
+	{
+		const int iArea = pLoopArea->GetID();
+		AreaYieldEntry* pEntry = NULL;
+		// Find the entry for this area
+		for (size_t i = 0; i < areaYields.size(); i++)
+		{
+			if (areaYields[i].iArea == iArea)
+			{
+				pEntry = &areaYields[i];
+				break;
+			}
+		}
+		// apply the yields to the area
+		for (int iYield = 0; iYield < NUM_YIELD_TYPES; iYield++)
+		{
+			eYield = static_cast<YieldTypes>(iYield);
+
+			const int iSame = pEntry ? pEntry->aiSame[iYield] : 0;
+			const int iDifferentFromThisArea = pEntry ? pEntry->aiDifferent[iYield] : 0;
+			const int iDifferentFromOtherAreas = aiDifferentTotal[iYield] - iDifferentFromThisArea;
+
+			const int iFinalYield = iSame + iDifferentFromOtherAreas;
+
+			pLoopArea->setCityYieldChange(GetID(), eYield, iFinalYield);
+		}
+	}
+	updateYield();
+#endif
 }
 
 //	--------------------------------------------------------------------------------
@@ -31359,7 +32012,7 @@ void CvPlayer::GatherPerTurnReplayStats(int iGameTurn)
 
 	//Only record the following statistics if the player is alive.
 #ifdef ENHANCED_GRAPHS
-	if ((GC.getGame().isNetworkMultiPlayer() && isHuman() || !GC.getGame().isNetworkMultiPlayer() && isAlive()) && !isMinorCiv())
+	if ((GC.getGame().isNetworkMultiPlayer() && isHuman()) || (!GC.getGame().isNetworkMultiPlayer() && isAlive()) && !isMinorCiv())
 #else
 	if (isAlive())
 #endif

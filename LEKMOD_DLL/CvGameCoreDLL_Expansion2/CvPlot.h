@@ -1,5 +1,5 @@
 /*	-------------------------------------------------------------------------------------------------------
-	© 1991-2012 Take-Two Interactive Software and its subsidiaries.  Developed by Firaxis Games.  
+	ù 1991-2012 Take-Two Interactive Software and its subsidiaries.  Developed by Firaxis Games.  
 	Sid Meier's Civilization V, Civ, Civilization, 2K Games, Firaxis Games, Take-Two Interactive Software 
 	and their respective logos are all trademarks of Take-Two interactive Software, Inc.  
 	All other marks and trademarks are the property of their respective owners.  
@@ -127,6 +127,10 @@ public:
 	bool isWithinTeamCityRadius(TeamTypes eTeam, PlayerTypes eIgnorePlayer = NO_PLAYER) const;
 
 	bool isLake() const;
+#if defined(LEKMOD_BUGANDA_LAKE)
+	bool isPseudoLake() const;
+	void setPseudoLake(bool bValue);
+#endif
 	bool isFreshWater() const;
 
 	bool isRiverCrossingFlowClockwise(DirectionTypes eDirection) const;
@@ -458,6 +462,19 @@ public:
 
 	bool IsAllowsSailLand() const;
 
+#if defined(LEKMOD_WATER_WALK_IMPROVEMENT_RULES)
+	/// Effective route from ActsAsRoute improvement (road/rail by team tech), else NO_ROUTE
+	RouteTypes GetImprovementActsAsRouteType(TeamTypes eTeam) const;
+	/// Best of plot route and improvement-as-route
+	RouteTypes GetEffectiveRouteType(const CvUnit* pUnit) const;
+	RouteTypes GetEffectiveRouteType(TeamTypes eTeam) const;
+	bool HasStackedLandAndNavalUnits() const;
+	/// True if pUnit arriving on this walk-water plot would create a land+naval combat lock
+	bool WouldBlockAttacksWithUnit(const CvUnit* pUnit) const;
+	void DoHandleUnitsAfterWaterWalkLost();
+	void DoHandleUnitsAfterWaterWalkGained();
+#endif
+
 	bool isRoughGround() const
 	{
 		if(isHills())
@@ -491,6 +508,9 @@ public:
 	void setNumResource(int iNum);
 	void changeNumResource(int iChange);
 	int getNumResourceForPlayer(PlayerTypes ePlayer) const;
+#ifdef LEKMOD_PRESERVE_UNDISCOVERED_RESOURCES_ON_REMOVE_IMPROVEMENT
+	bool DoesImprovementConnectResource(ResourceTypes eResource) const;
+#endif
 
 	ImprovementTypes getImprovementType() const;
 	ImprovementTypes getImprovementTypeNeededToImproveResource(PlayerTypes ePlayer = NO_PLAYER, bool bTestPlotOwner = true);
@@ -773,6 +793,10 @@ public:
 	void SetArtifactGreatWork(GreatWorkType eWork);
 	bool HasWrittenArtifact() const;
 
+#if defined(v35_TRAITIFY)
+	void PerformCultureBomb(PlayerTypes eCulprit, int iRadius, bool bSteal, bool bImpactDiplo = true);
+#endif
+
 protected:
 	class PlotBoolField
 	{
@@ -972,7 +996,9 @@ protected:
 	char m_cContinentType;
 	char m_cRiverCrossing;	// bit field
 #endif
-
+#if defined(LEKMOD_BUGANDA_LAKE)
+	bool m_bPseudoLake : 1;
+#endif
 	bool m_bImprovementPillaged:1;
 	bool m_bRoutePillaged:1;
 #if defined(LEKMOD_NO_INSTANT_REPAIR_ON_ROUTE)

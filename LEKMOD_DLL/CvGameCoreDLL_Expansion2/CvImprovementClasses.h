@@ -1,5 +1,5 @@
 /*	-------------------------------------------------------------------------------------------------------
-	© 1991-2012 Take-Two Interactive Software and its subsidiaries.  Developed by Firaxis Games.  
+	ù 1991-2012 Take-Two Interactive Software and its subsidiaries.  Developed by Firaxis Games.  
 	Sid Meier's Civilization V, Civ, Civilization, 2K Games, Firaxis Games, Take-Two Interactive Software 
 	and their respective logos are all trademarks of Take-Two interactive Software, Inc.  
 	All other marks and trademarks are the property of their respective owners.  
@@ -87,6 +87,10 @@ public:
 	bool IsFreshWaterMakesValid() const;
 	bool IsRiverSideMakesValid() const;
 	bool IsNoFreshWater() const;
+#if defined(LEKMOD_BUGANDA_LAKE)
+	bool IsAdjacentCityMakesValid() const;
+	bool IsFreshWaterSource() const;
+#endif
 	bool IsRequiresFlatlands() const;
 	bool IsRequiresFlatlandsOrFreshWater() const;
 	bool IsRequiresFeature() const;
@@ -111,6 +115,13 @@ public:
 	bool IsAllowsSailLand() const;
 	bool IsCreatedByGreatPerson() const;
 	bool IsSpecificCivRequired() const;
+
+#if defined(LEKMOD_WATER_WALK_IMPROVEMENT_RULES)
+	bool IsActsAsRoute() const;
+	TechTypes GetActsAsRouteTech() const;
+	TechTypes GetActsAsRailroadTech() const;
+	int GetStackedDomainDefensePenalty() const;
+#endif
 
 	CivilizationTypes GetRequiredCivilization() const;
 
@@ -215,6 +226,10 @@ protected:
 	bool m_bFreshWaterMakesValid;
 	bool m_bRiverSideMakesValid;
 	bool m_bNoFreshWater;
+#if defined(LEKMOD_BUGANDA_LAKE)
+	bool m_bAdjacentCityMakesValid;
+	bool m_bFreshWaterSource;
+#endif
 	bool m_bRequiresFlatlands;
 	bool m_bRequiresFlatlandsOrFreshWater;
 	bool m_bRequiresFeature;
@@ -239,6 +254,12 @@ protected:
 	bool m_bAllowsSailLand;
 	bool m_bCreatedByGreatPerson;
 	bool m_bSpecificCivRequired;
+#if defined(LEKMOD_WATER_WALK_IMPROVEMENT_RULES)
+	bool m_bActsAsRoute;
+	TechTypes m_eActsAsRouteTech;
+	TechTypes m_eActsAsRailroadTech;
+	int m_iStackedDomainDefensePenalty;
+#endif
 
 	CvString m_strArtDefineTag;
 	ImprovementUsageTypes m_eImprovementUsageType;

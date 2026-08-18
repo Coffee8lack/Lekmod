@@ -170,11 +170,27 @@ function ShowHideHandler( isHide, bInit )
 		SetInLobby( false );
 		
 		if PreGame.GetLoadFileName() == "" then
-			-- Default these to their state in the options manager
-			PreGame.SetQuickCombat( OptionsManager.GetMultiplayerQuickCombatEnabled() );
-			PreGame.SetQuickMovement( OptionsManager.GetMultiplayerQuickMovementEnabled() );		
+			-- Default these to their state in the options manager (new lobby only).
+			-- Write BOTH stores — Game Options UI uses GetGameOption, runtime/DLL uses GetQuick*.
+			local qc = OptionsManager.GetMultiplayerQuickCombatEnabled();
+			local qm = OptionsManager.GetMultiplayerQuickMovementEnabled();
+			PreGame.SetQuickCombat( qc );
+			PreGame.SetQuickMovement( qm );
+			PreGame.SetGameOption("GAMEOPTION_QUICK_COMBAT", qc);
+			PreGame.SetGameOption("GAMEOPTION_QUICK_MOVEMENT", qm);
 			if (Network.IsDedicatedServer()) then
 				PreGame.SetGameOption("GAMEOPTION_PITBOSS", true);
+			end
+		else
+			-- Loaded lobby/save: push GameOption → Quick* so a prior lobby toggle that
+			-- only wrote SetGameOption still applies after reload.
+			local qc = PreGame.GetGameOption("GAMEOPTION_QUICK_COMBAT");
+			local qm = PreGame.GetGameOption("GAMEOPTION_QUICK_MOVEMENT");
+			if qc ~= nil and PreGame.SetQuickCombat ~= nil then
+				PreGame.SetQuickCombat(qc == 1);
+			end
+			if qm ~= nil and PreGame.SetQuickMovement ~= nil then
+				PreGame.SetQuickMovement(qm == 1);
 			end
 		end
 		

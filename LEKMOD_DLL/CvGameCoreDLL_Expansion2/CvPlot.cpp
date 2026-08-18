@@ -25,6 +25,7 @@
 #include "CvEnumSerialization.h"
 #include "CvNotifications.h"
 #include "CvMinorCivAI.h"
+#include "CvDiplomacyAI.h"
 #include "CvUnitCombat.h"
 #include "CvDLLUtilDefines.h"
 #include "CvInfosSerializationHelper.h"
@@ -241,6 +242,9 @@ void CvPlot::reset(int iX, int iY, bool bConstructorCall)
 	m_bRoughFeature = false;
 	m_bResourceLinkedCityActive = false;
 	m_bImprovedByGiftFromMajor = false;
+#if defined(LEKMOD_BUGANDA_LAKE)
+	m_bPseudoLake = false;
+#endif
 	m_bIsAdjacentToLand = false;
 	m_bIsImpassable = false;
 
@@ -1108,8 +1112,22 @@ bool CvPlot::isLake() const
 
 	return false;
 }
-
-
+#if defined(LEKMOD_BUGANDA_LAKE)
+bool CvPlot::isPseudoLake() const
+{
+	// this is for new buganda lake and lake victoria
+	return m_bPseudoLake || (getFeatureType() == static_cast<FeatureTypes>(GC.getInfoTypeForString("FEATURE_LAKE_VICTORIA")));
+}
+void CvPlot::setPseudoLake(bool bValue)
+{
+	if (isPseudoLake() == bValue)
+	{
+		return;
+	}
+	m_bPseudoLake = bValue;
+	updateYield();
+}
+#endif
 //	--------------------------------------------------------------------------------
 // XXX precalculate this???
 bool CvPlot::isFreshWater() const
@@ -2156,7 +2174,16 @@ bool CvPlot::canHaveImprovement(ImprovementTypes eImprovement, TeamTypes eTeam, 
 	{
 		return false;
 	}
-
+#if defined(LEKMOD_BUGANDA_LAKE)
+	if (pkImprovementInfo->IsAdjacentCityMakesValid())
+	{
+		bool bAdjacentCity = GetAdjacentCity() != NULL ? true : false;
+		if(!bAdjacentCity)
+		{
+			return false;
+		}
+	}
+#endif
 	if(pkImprovementInfo->IsRequiresFlatlandsOrFreshWater() && !isFlatlands() && !bIsFreshWater)
 	{
 		return false;
@@ -2350,11 +2377,55 @@ bool CvPlot::canBuild(BuildTypes eBuild, PlayerTypes ePlayer, bool bTestVisible,
 		}
 	}
 
+#if defined(LEKMOD_WATER_WALK_IMPROVEMENT_RULES)
+	if (thisBuildInfo.IsRemoveWaterCrossing())
+	{
+		if (!getPlotCity() && getImprovementType() != NO_IMPROVEMENT)
+		{
+			CvImprovementEntry* pkExisting = GC.getImprovementInfo(getImprovementType());
+			if (pkExisting && pkExisting->IsAllowsWalkWater())
+			{
+				if (getOwner() == ePlayer)
+				{
+					bValid = true;
+				}
+				else if (getOwner() == NO_PLAYER && GetPlayerThatBuiltImprovement() == ePlayer)
+				{
+					bValid = true;
+				}
+				else
+				{
+					return false;
+				}
+			}
+			else
+			{
+				return false;
+			}
+		}
+		else
+		{
+			return false;
+		}
+	}
+#endif
+
 	eImprovement = ((ImprovementTypes)(thisBuildInfo.getImprovement()));
 
 	// Improvement
 	if(eImprovement != NO_IMPROVEMENT)
 	{
+#if defined(LEKMOD_WATER_WALK_IMPROVEMENT_RULES)
+		// No other improvements on water-walk improvements (remove via RemoveWaterCrossing builds only)
+		if (getImprovementType() != NO_IMPROVEMENT && getImprovementType() != eImprovement)
+		{
+			CvImprovementEntry* pkExisting = GC.getImprovementInfo(getImprovementType());
+			if (pkExisting && pkExisting->IsAllowsWalkWater() && !IsImprovementPillaged())
+			{
+				return false;
+			}
+		}
+#endif
 		// Player must be able to build this Improvement
 		if(!canHaveImprovement(eImprovement, eTeam, bTestVisible))
 		{
@@ -2534,6 +2605,13 @@ bool CvPlot::canBuild(BuildTypes eBuild, PlayerTypes ePlayer, bool bTestVisible,
 	// Route
 	if(eRoute != NO_ROUTE)
 	{
+#if defined(LEKMOD_WATER_WALK_IMPROVEMENT_RULES)
+		// Water-walk improvements act as roads themselves — no real routes on top
+		if (IsAllowsWalkWater())
+		{
+			return false;
+		}
+#endif
 		if(getRouteType() != NO_ROUTE)
 		{
 #if defined(LEKMOD_NO_INSTANT_REPAIR_ON_ROUTE) // Allows Routes to be made on Pontoons if there is already a Route there for upgrading purposes.
@@ -2700,7 +2778,45 @@ int CvPlot::getBuildTime(BuildTypes eBuild, PlayerTypes ePlayer) const
 
 	if(getFeatureType() != NO_FEATURE)
 	{
-		iTime += GC.getBuildInfo(eBuild)->getFeatureTime(getFeatureType());
+		CvBuildInfo* pkBuildInfo = GC.getBuildInfo(eBuild);
+		if(pkBuildInfo)
+		{
+			FeatureTypes eFeature = getFeatureType();
+#ifdef LEKMOD_SKIP_FEATURE_TIME_IF_NOT_REMOVED
+			// Builds that keep the feature (e.g. Trading Post) should not pay clear time.
+			// Forts are the exception and still take the longer build time.
+			bool bAddFeatureTime = true;
+			if(!pkBuildInfo->isFeatureRemove(eFeature))
+			{
+				bool bIsFort = false;
+				const ImprovementTypes eImprovement = (ImprovementTypes)pkBuildInfo->getImprovement();
+				if(eImprovement != NO_IMPROVEMENT)
+				{
+					CvImprovementEntry* pkImprovementInfo = GC.getImprovementInfo(eImprovement);
+					if(pkImprovementInfo && pkImprovementInfo->GetType() && strcmp(pkImprovementInfo->GetType(), "IMPROVEMENT_FORT") == 0)
+					{
+						bIsFort = true;
+					}
+				}
+				if(!bIsFort && pkBuildInfo->GetType() && strcmp(pkBuildInfo->GetType(), "BUILD_FORT") == 0)
+				{
+					bIsFort = true;
+				}
+
+				if(!bIsFort)
+				{
+					bAddFeatureTime = false;
+				}
+			}
+
+			if(bAddFeatureTime)
+			{
+				iTime += pkBuildInfo->getFeatureTime(eFeature);
+			}
+#else
+			iTime += pkBuildInfo->getFeatureTime(eFeature);
+#endif
+		}
 	}
 
 	iTime *= std::max(0, (GC.getTerrainInfo(getTerrainType())->getBuildModifier() + 100));
@@ -3140,7 +3256,8 @@ int CvPlot::defenseModifier(TeamTypes eDefender, bool, bool bHelp) const
 	// Feature
 	else if(getFeatureType() != NO_FEATURE)
 	{
-		iModifier = GC.getFeatureInfo(getFeatureType())->getDefenseModifier();
+		CvFeatureInfo* pkFeature = GC.getFeatureInfo(getFeatureType());
+		iModifier = pkFeature ? pkFeature->getDefenseModifier() : 0;
 	}
 	// Terrain
 	else
@@ -3163,20 +3280,70 @@ int CvPlot::defenseModifier(TeamTypes eDefender, bool, bool bHelp) const
 		eImprovement = getImprovementType();
 	}
 
+	int iImprovementDef = 0;
+	int iImprovementGlobal = 0;
+	CvImprovementEntry* pkImprovement = NULL;
 	if(eImprovement != NO_IMPROVEMENT && !IsImprovementPillaged())
 	{
-		if(eDefender != NO_TEAM && (getTeam() == NO_TEAM || GET_TEAM(eDefender).isFriendlyTerritory(getTeam())))
-		{
-			CvImprovementEntry* pkImprovement = GC.getImprovementInfo(eImprovement);
-			if (pkImprovement)
-				iModifier += pkImprovement->GetDefenseModifier();
-		}
-		CvImprovementEntry* pkImprovement = GC.getImprovementInfo(eImprovement);
+		pkImprovement = GC.getImprovementInfo(eImprovement);
 		if (pkImprovement)
 		{
-			iModifier += pkImprovement->GetDefenseModifierGlobal();
+			if(eDefender != NO_TEAM && (getTeam() == NO_TEAM || GET_TEAM(eDefender).isFriendlyTerritory(getTeam())))
+			{
+				iImprovementDef = pkImprovement->GetDefenseModifier();
+			}
+			iImprovementGlobal = pkImprovement->GetDefenseModifierGlobal();
 		}
 	}
+
+#if defined(LEKMOD_WATER_WALK_IMPROVEMENT_RULES)
+	{
+		bool bWalkWaterFeature = false;
+		if (getFeatureType() != NO_FEATURE)
+		{
+			CvFeatureInfo* pkWalkFeature = GC.getFeatureInfo(getFeatureType());
+			bWalkWaterFeature = pkWalkFeature && pkWalkFeature->IsAllowsWalkWater();
+		}
+		const bool bWalkWaterImprovement = pkImprovement && pkImprovement->IsAllowsWalkWater();
+		if (bWalkWaterFeature && bWalkWaterImprovement && !isHills() && !isMountain())
+		{
+			// Shallows feature + pontoon improvement: one plot defense, not both
+			iModifier = std::min(iModifier, iImprovementDef);
+		}
+		else
+		{
+			iModifier += iImprovementDef;
+		}
+	}
+#else
+	iModifier += iImprovementDef;
+#endif
+	iModifier += iImprovementGlobal;
+
+#if defined(LEKMOD_WATER_WALK_IMPROVEMENT_RULES)
+	// Pontoon + shallows stacked-domain penalties must not add together
+	if (HasStackedLandAndNavalUnits())
+	{
+		int iStackedPenalty = 0;
+		if (getFeatureType() != NO_FEATURE)
+		{
+			CvFeatureInfo* pkStackedFeature = GC.getFeatureInfo(getFeatureType());
+			if (pkStackedFeature)
+			{
+				iStackedPenalty = std::max(iStackedPenalty, pkStackedFeature->GetStackedDomainDefensePenalty());
+			}
+		}
+		if (eImprovement != NO_IMPROVEMENT && !IsImprovementPillaged())
+		{
+			CvImprovementEntry* pkStackedImprovement = GC.getImprovementInfo(eImprovement);
+			if (pkStackedImprovement)
+			{
+				iStackedPenalty = std::max(iStackedPenalty, pkStackedImprovement->GetStackedDomainDefensePenalty());
+			}
+		}
+		iModifier -= iStackedPenalty;
+	}
+#endif
 
 	if(!bHelp)
 	{
@@ -3193,13 +3360,24 @@ int CvPlot::defenseModifier(TeamTypes eDefender, bool, bool bHelp) const
 //	---------------------------------------------------------------------------
 int CvPlot::movementCost(const CvUnit* pUnit, const CvPlot* pFromPlot, int iMovesRemaining /*= 0*/) const
 {
+#if defined(LEKMOD_WATER_WALK_IMPROVEMENT_RULES)
+	// Walk-water is land-like: use land base moves so route flat costs match normal railroads
+	const DomainTypes eMovesDomain = (isWater() && !IsAllowsWalkWater()) ? DOMAIN_SEA : NO_DOMAIN;
+	return CvUnitMovement::MovementCost(pUnit, pFromPlot, this, pUnit->baseMoves(eMovesDomain), pUnit->maxMoves(), iMovesRemaining);
+#else
 	return CvUnitMovement::MovementCost(pUnit, pFromPlot, this, pUnit->baseMoves(isWater()?DOMAIN_SEA:NO_DOMAIN), pUnit->maxMoves(), iMovesRemaining);
+#endif
 }
 
 //	---------------------------------------------------------------------------
 int CvPlot::MovementCostNoZOC(const CvUnit* pUnit, const CvPlot* pFromPlot, int iMovesRemaining /*= 0*/) const
 {
+#if defined(LEKMOD_WATER_WALK_IMPROVEMENT_RULES)
+	const DomainTypes eMovesDomain = (isWater() && !IsAllowsWalkWater()) ? DOMAIN_SEA : NO_DOMAIN;
+	return CvUnitMovement::MovementCostNoZOC(pUnit, pFromPlot, this, pUnit->baseMoves(eMovesDomain), pUnit->maxMoves(), iMovesRemaining);
+#else
 	return CvUnitMovement::MovementCostNoZOC(pUnit, pFromPlot, this, pUnit->baseMoves(isWater()?DOMAIN_SEA:NO_DOMAIN), pUnit->maxMoves(), iMovesRemaining);
+#endif
 }
 
 //	--------------------------------------------------------------------------------
@@ -3210,8 +3388,32 @@ bool CvPlot::IsAllowsWalkWater() const
 	{
 		CvImprovementEntry *pkEntry = GC.getImprovementInfo(eImprovement);
 		if (pkEntry)
+		{
+#if defined(LEKMOD_WATER_WALK_IMPROVEMENT_RULES)
+			if (IsImprovementPillaged())
+			{
+				// Pillaged walk-water improvements do not allow walking; features still can
+			}
+			else if (pkEntry->IsAllowsWalkWater())
+			{
+				return true;
+			}
+#else
 			return pkEntry->IsAllowsWalkWater();
+#endif
+		}
 	}
+#if defined(LEKMOD_WATER_WALK_IMPROVEMENT_RULES)
+	FeatureTypes eFeature = getFeatureType();
+	if (eFeature != NO_FEATURE)
+	{
+		CvFeatureInfo* pkFeature = GC.getFeatureInfo(eFeature);
+		if (pkFeature && pkFeature->IsAllowsWalkWater())
+		{
+			return true;
+		}
+	}
+#endif
 	return false;
 }
 // --------------------------------------------------------------------------------- // from Izy
@@ -3226,6 +3428,270 @@ bool CvPlot::IsAllowsSailLand() const
     }
     return false;
 }
+#if defined(LEKMOD_WATER_WALK_IMPROVEMENT_RULES)
+//	--------------------------------------------------------------------------------
+RouteTypes CvPlot::GetImprovementActsAsRouteType(TeamTypes eTeam) const
+{
+	if (eTeam == NO_TEAM || IsImprovementPillaged())
+	{
+		return NO_ROUTE;
+	}
+
+	ImprovementTypes eImprovement = getImprovementType();
+	if (eImprovement == NO_IMPROVEMENT)
+	{
+		return NO_ROUTE;
+	}
+
+	CvImprovementEntry* pkImprovement = GC.getImprovementInfo(eImprovement);
+	if (pkImprovement == NULL || !pkImprovement->IsActsAsRoute())
+	{
+		return NO_ROUTE;
+	}
+
+	CvTeam& kTeam = GET_TEAM(eTeam);
+	const TechTypes eRailTech = pkImprovement->GetActsAsRailroadTech();
+	if (eRailTech != NO_TECH && kTeam.GetTeamTechs()->HasTech(eRailTech))
+	{
+		return ROUTE_RAILROAD;
+	}
+
+	const TechTypes eRouteTech = pkImprovement->GetActsAsRouteTech();
+	if (eRouteTech == NO_TECH || kTeam.GetTeamTechs()->HasTech(eRouteTech))
+	{
+		return ROUTE_ROAD;
+	}
+
+	return NO_ROUTE;
+}
+
+//	--------------------------------------------------------------------------------
+RouteTypes CvPlot::GetEffectiveRouteType(TeamTypes eTeam) const
+{
+	RouteTypes ePlotRoute = (!IsRoutePillaged()) ? getRouteType() : NO_ROUTE;
+	RouteTypes eImpRoute = GetImprovementActsAsRouteType(eTeam);
+
+	if (ePlotRoute == NO_ROUTE)
+	{
+		return eImpRoute;
+	}
+	if (eImpRoute == NO_ROUTE)
+	{
+		return ePlotRoute;
+	}
+
+	CvRouteInfo* pkPlot = GC.getRouteInfo(ePlotRoute);
+	CvRouteInfo* pkImp = GC.getRouteInfo(eImpRoute);
+	if (pkPlot && pkImp && pkImp->getValue() > pkPlot->getValue())
+	{
+		return eImpRoute;
+	}
+	return ePlotRoute;
+}
+
+//	--------------------------------------------------------------------------------
+RouteTypes CvPlot::GetEffectiveRouteType(const CvUnit* pUnit) const
+{
+	if (pUnit == NULL)
+	{
+		return (!IsRoutePillaged()) ? getRouteType() : NO_ROUTE;
+	}
+	return GetEffectiveRouteType(pUnit->getTeam());
+}
+
+//	--------------------------------------------------------------------------------
+bool CvPlot::HasStackedLandAndNavalUnits() const
+{
+	bool bLand = false;
+	bool bNaval = false;
+	const IDInfo* pUnitNode = headUnitNode();
+	while (pUnitNode != NULL)
+	{
+		CvUnit* pLoopUnit = ::getUnit(*pUnitNode);
+		pUnitNode = nextUnitNode(pUnitNode);
+		if (pLoopUnit == NULL || pLoopUnit->isDelayedDeath())
+		{
+			continue;
+		}
+
+		// Naval group: sea units and embarked units
+		if (pLoopUnit->getDomainType() == DOMAIN_SEA || pLoopUnit->isEmbarked())
+		{
+			bNaval = true;
+		}
+		// Land group: combat land (unembarked) or hover.
+		// Civilians may stand on walk-water but do not create the combat lock with naval units.
+		else if (pLoopUnit->IsHoveringUnit() ||
+			(pLoopUnit->getDomainType() == DOMAIN_LAND && !pLoopUnit->isEmbarked() && pLoopUnit->IsCombatUnit()))
+		{
+			bLand = true;
+		}
+
+		if (bLand && bNaval)
+		{
+			return true;
+		}
+	}
+	return false;
+}
+
+//	--------------------------------------------------------------------------------
+bool CvPlot::WouldBlockAttacksWithUnit(const CvUnit* pUnit) const
+{
+	if (pUnit == NULL || !IsAllowsWalkWater())
+	{
+		return false;
+	}
+
+	bool bLand = false;
+	bool bNaval = false;
+	const IDInfo* pUnitNode = headUnitNode();
+	while (pUnitNode != NULL)
+	{
+		CvUnit* pLoopUnit = ::getUnit(*pUnitNode);
+		pUnitNode = nextUnitNode(pUnitNode);
+		if (pLoopUnit == NULL || pLoopUnit->isDelayedDeath() || pLoopUnit == pUnit)
+		{
+			continue;
+		}
+
+		if (pLoopUnit->getDomainType() == DOMAIN_SEA || pLoopUnit->isEmbarked())
+		{
+			bNaval = true;
+		}
+		else if (pLoopUnit->IsHoveringUnit() ||
+			(pLoopUnit->getDomainType() == DOMAIN_LAND && !pLoopUnit->isEmbarked() && pLoopUnit->IsCombatUnit()))
+		{
+			bLand = true;
+		}
+
+		if (bLand && bNaval)
+		{
+			return true;
+		}
+	}
+
+	// Classify pUnit as it would stand on this walk-water tile after arriving
+	if (pUnit->getDomainType() == DOMAIN_SEA)
+	{
+		bNaval = true;
+	}
+	else if (pUnit->IsHoveringUnit())
+	{
+		bLand = true;
+	}
+	else if (pUnit->getDomainType() == DOMAIN_LAND && pUnit->IsCombatUnit())
+	{
+		// Combat land walks unembarked on walk-water
+		bLand = true;
+	}
+	else if (pUnit->isEmbarked())
+	{
+		bNaval = true;
+	}
+	// Civilians do not create the combat lock
+
+	return bLand && bNaval;
+}
+
+//	--------------------------------------------------------------------------------
+void CvPlot::DoHandleUnitsAfterWaterWalkLost()
+{
+	std::vector<CvUnit*> aLandUnits;
+	const IDInfo* pUnitNode = headUnitNode();
+	while (pUnitNode != NULL)
+	{
+		CvUnit* pLoopUnit = ::getUnit(*pUnitNode);
+		pUnitNode = nextUnitNode(pUnitNode);
+		if (pLoopUnit == NULL || pLoopUnit->isDelayedDeath())
+		{
+			continue;
+		}
+		if (pLoopUnit->getDomainType() == DOMAIN_LAND && !pLoopUnit->isEmbarked() && !pLoopUnit->canMoveAllTerrain() && !pLoopUnit->IsHoveringUnit())
+		{
+			aLandUnits.push_back(pLoopUnit);
+		}
+	}
+
+	if (aLandUnits.empty())
+	{
+		return;
+	}
+
+	// Prefer to keep a combat unit on the tile to embark; push extras away first
+	std::vector<CvUnit*> aToPush;
+	CvUnit* pToEmbark = NULL;
+	for (size_t i = 0; i < aLandUnits.size(); ++i)
+	{
+		CvUnit* pUnit = aLandUnits[i];
+		if (pToEmbark == NULL && pUnit->IsCombatUnit() && pUnit->CanEverEmbark())
+		{
+			pToEmbark = pUnit;
+		}
+		else
+		{
+			aToPush.push_back(pUnit);
+		}
+	}
+	if (pToEmbark == NULL)
+	{
+		for (size_t i = 0; i < aLandUnits.size(); ++i)
+		{
+			if (aLandUnits[i]->CanEverEmbark())
+			{
+				pToEmbark = aLandUnits[i];
+				break;
+			}
+		}
+		aToPush.clear();
+		for (size_t i = 0; i < aLandUnits.size(); ++i)
+		{
+			if (aLandUnits[i] != pToEmbark)
+			{
+				aToPush.push_back(aLandUnits[i]);
+			}
+		}
+	}
+
+	for (size_t i = 0; i < aToPush.size(); ++i)
+	{
+		aToPush[i]->jumpToNearestValidPlot();
+	}
+
+	if (pToEmbark != NULL && pToEmbark->CanEverEmbark() && !pToEmbark->isEmbarked())
+	{
+		pToEmbark->embark(this);
+	}
+	else if (pToEmbark != NULL && !pToEmbark->CanEverEmbark())
+	{
+		pToEmbark->jumpToNearestValidPlot();
+	}
+}
+
+//	--------------------------------------------------------------------------------
+void CvPlot::DoHandleUnitsAfterWaterWalkGained()
+{
+	const IDInfo* pUnitNode = headUnitNode();
+	while (pUnitNode != NULL)
+	{
+		CvUnit* pLoopUnit = ::getUnit(*pUnitNode);
+		pUnitNode = nextUnitNode(pUnitNode);
+		if (pLoopUnit == NULL || pLoopUnit->isDelayedDeath())
+		{
+			continue;
+		}
+		if (pLoopUnit->getDomainType() != DOMAIN_LAND || !pLoopUnit->isEmbarked())
+		{
+			continue;
+		}
+		if (pLoopUnit->canMoveAllTerrain() || pLoopUnit->IsHoveringUnit())
+		{
+			continue;
+		}
+		pLoopUnit->disembark(this);
+	}
+}
+#endif
 //	--------------------------------------------------------------------------------
 int CvPlot::getExtraMovePathCost() const
 {
@@ -4294,7 +4760,11 @@ int CvPlot::getNumFriendlyUnitsOfType(const CvUnit* pUnit, bool bBreakOnUnitLimi
 	}
 
 	bool bPretendEmbarked = false;
-	if(isWater() && pUnit->canEmbarkOnto(*pUnit->plot(), *this))
+	if(isWater()
+#if defined(LEKMOD_WATER_WALK_IMPROVEMENT_RULES)
+		&& !IsAllowsWalkWater()
+#endif
+		&& pUnit->canEmbarkOnto(*pUnit->plot(), *this))
 	{
 		bPretendEmbarked = true;
 	}
@@ -4491,6 +4961,15 @@ bool CvPlot::isRoute() const
 //	--------------------------------------------------------------------------------
 bool CvPlot::isValidRoute(const CvUnit* pUnit) const
 {
+#if defined(LEKMOD_WATER_WALK_IMPROVEMENT_RULES)
+	if (GetEffectiveRouteType(pUnit) != NO_ROUTE)
+	{
+		if (!pUnit->isEnemy(getTeam(), this) || pUnit->isEnemyRoute())
+		{
+			return true;
+		}
+	}
+#else
 	if((RouteTypes)m_eRouteType != NO_ROUTE && !m_bRoutePillaged)
 	{
 		if(!pUnit->isEnemy(getTeam(), this) || pUnit->isEnemyRoute())
@@ -4498,6 +4977,7 @@ bool CvPlot::isValidRoute(const CvUnit* pUnit) const
 			return true;
 		}
 	}
+#endif
 #ifdef AUI_UNIT_MOVEMENT_IROQUOIS_ROAD_TRANSITION_FIX
 	if (pUnit->getOwner() != NO_PLAYER && GET_PLAYER(pUnit->getOwner()).GetPlayerTraits()->IsMoveFriendlyWoodsAsRoad())
 	{
@@ -4593,6 +5073,12 @@ bool CvPlot::isValidDomainForLocation(const CvUnit& unit) const
 //	--------------------------------------------------------------------------------
 bool CvPlot::isValidDomainForAction(const CvUnit& unit) const
 {
+	// Hover units never embark; may act on any water including deep ocean.
+	if (unit.IsHoveringUnit())
+	{
+		return true;
+	}
+
 	switch(unit.getDomainType())
 	{
 	case DOMAIN_SEA:
@@ -5405,7 +5891,11 @@ void CvPlot::setOwner(PlayerTypes eNewValue, int iAcquiringCityID, bool bCheckUn
 
 					if(GET_TEAM(getTeam()).GetTeamTechs()->HasTech((TechTypes) GC.getResourceInfo(getResourceType())->getTechCityTrade()))
 					{
+#ifdef LEKMOD_PRESERVE_UNDISCOVERED_RESOURCES_ON_REMOVE_IMPROVEMENT
+						if(getImprovementType() != NO_IMPROVEMENT && DoesImprovementConnectResource(getResourceType()))
+#else
 						if(getImprovementType() != NO_IMPROVEMENT && GC.getImprovementInfo(getImprovementType())->IsImprovementResourceTrade(getResourceType()))
+#endif
 						{
 							if(!IsImprovementPillaged())
 							{
@@ -5580,7 +6070,11 @@ void CvPlot::setOwner(PlayerTypes eNewValue, int iAcquiringCityID, bool bCheckUn
 					// Add Resource Quantity to total
 					if(GET_TEAM(getTeam()).GetTeamTechs()->HasTech((TechTypes) GC.getResourceInfo(getResourceType())->getTechCityTrade()))
 					{
+#ifdef LEKMOD_PRESERVE_UNDISCOVERED_RESOURCES_ON_REMOVE_IMPROVEMENT
+						if(getImprovementType() != NO_IMPROVEMENT && DoesImprovementConnectResource(getResourceType()))
+#else
 						if(getImprovementType() != NO_IMPROVEMENT && GC.getImprovementInfo(getImprovementType())->IsImprovementResourceTrade(getResourceType()))
+#endif
 						{
 							if(!IsImprovementPillaged())
 							{
@@ -6104,6 +6598,9 @@ void CvPlot::setFeatureType(FeatureTypes eNewValue, int iVariety)
 
 	if((eOldFeature != eNewValue) || (m_iFeatureVariety != iVariety))
 	{
+#if defined(LEKMOD_WATER_WALK_IMPROVEMENT_RULES)
+		const bool bHadActiveWalkWater = IsAllowsWalkWater();
+#endif
 		if((eOldFeature == NO_FEATURE) ||
 		        (eNewValue == NO_FEATURE) ||
 		        (GC.getFeatureInfo(eOldFeature)->getSeeThroughChange() != GC.getFeatureInfo(eNewValue)->getSeeThroughChange()))
@@ -6170,6 +6667,16 @@ void CvPlot::setFeatureType(FeatureTypes eNewValue, int iVariety)
 				}
 			}
 		}
+#if defined(LEKMOD_WATER_WALK_IMPROVEMENT_RULES)
+		if (bHadActiveWalkWater && !IsAllowsWalkWater())
+		{
+			DoHandleUnitsAfterWaterWalkLost();
+		}
+		else if (!bHadActiveWalkWater && IsAllowsWalkWater())
+		{
+			DoHandleUnitsAfterWaterWalkGained();
+		}
+#endif
 	}
 }
 
@@ -6373,6 +6880,41 @@ int CvPlot::getNumResourceForPlayer(PlayerTypes ePlayer) const
 	return iRtnValue;
 }
 
+#ifdef LEKMOD_PRESERVE_UNDISCOVERED_RESOURCES_ON_REMOVE_IMPROVEMENT
+//	--------------------------------------------------------------------------------
+/// True if the plot's improvement connects eResource (normal trade improvement, or permanent RemovesResource keeping a now-revealed resource)
+bool CvPlot::DoesImprovementConnectResource(ResourceTypes eResource) const
+{
+	if(eResource == NO_RESOURCE || getImprovementType() == NO_IMPROVEMENT)
+	{
+		return false;
+	}
+
+	CvImprovementEntry* pkImprovementInfo = GC.getImprovementInfo(getImprovementType());
+	if(!pkImprovementInfo)
+	{
+		return false;
+	}
+
+	if(pkImprovementInfo->IsImprovementResourceTrade(eResource))
+	{
+		return true;
+	}
+
+	// Permanent resource-removing improvements leave undiscovered resources in place;
+	// once the owning team can see the resource, the improvement itself connects it.
+	if(pkImprovementInfo->IsPermanent() && pkImprovementInfo->IsRemovesResource())
+	{
+		if(getTeam() != NO_TEAM && getResourceType(getTeam()) == eResource)
+		{
+			return true;
+		}
+	}
+
+	return false;
+}
+#endif
+
 //	--------------------------------------------------------------------------------
 ImprovementTypes CvPlot::getImprovementType() const
 {
@@ -6464,45 +7006,48 @@ void CvPlot::setImprovementType(ImprovementTypes eNewValue, PlayerTypes eBuilder
 	}
 	bool bIgnoreResourceTechPrereq = bGiftFromMajor; // If it is a gift from a major civ, our tech limitations do not apply
 
-	if(eOldImprovement != eNewValue)
+	if (eOldImprovement != eNewValue)
 	{
+#if defined(LEKMOD_WATER_WALK_IMPROVEMENT_RULES)
+		const bool bHadActiveWalkWater = IsAllowsWalkWater();
+#endif
 #ifdef AUI_PLOT_FIX_PILLAGED_PLOT_ON_NEW_IMPROVEMENT
 		SetImprovementPillaged(false);
 #endif
 		PlayerTypes owningPlayerID = getOwner();
-		if(eOldImprovement != NO_IMPROVEMENT)
+		if (eOldImprovement != NO_IMPROVEMENT)
 		{
 			CvImprovementEntry& oldImprovementEntry = *GC.getImprovementInfo(eOldImprovement);
 #if !defined (LEKMOD_ADJACENT_IMPROVEMENT_YIELD) // Fix visual Bug
 			// If this improvement can add culture to nearby improvements, update them as well
-			if(oldImprovementEntry.GetCultureAdjacentSameType() > 0)
+			if (oldImprovementEntry.GetCultureAdjacentSameType() > 0)
 #else
 			// If this improvement can add yields to nearby improvements, update them as well
 			if (oldImprovementEntry.GetCultureAdjacentSameType() > 0 || oldImprovementEntry.HasAnyAdjacencyYieldBonus())
 #endif
 			{
-				for(iI = 0; iI < NUM_DIRECTION_TYPES; iI++)
+				for (iI = 0; iI < NUM_DIRECTION_TYPES; iI++)
 				{
 					CvPlot* pAdjacentPlot = plotDirection(getX(), getY(), ((DirectionTypes)iI));
-					if(pAdjacentPlot && pAdjacentPlot->getImprovementType() == eOldImprovement)
+					if (pAdjacentPlot && pAdjacentPlot->getImprovementType() == eOldImprovement)
 					{
 						pAdjacentPlot->updateYield();
 					}
 				}
 			}
 
-			if(area())
+			if (area())
 			{
 				area()->changeNumImprovements(eOldImprovement, -1);
 			}
 			// Someone owns this plot
-			if(owningPlayerID != NO_PLAYER)
+			if (owningPlayerID != NO_PLAYER)
 			{
 				CvPlayer& owningPlayer = GET_PLAYER(owningPlayerID);
 				owningPlayer.changeImprovementCount(eOldImprovement, -1);
 
 				// Maintenance change!
-				if(MustPayMaintenanceHere(owningPlayerID))
+				if (MustPayMaintenanceHere(owningPlayerID))
 				{
 #ifdef AUI_WARNING_FIXES
 					GET_PLAYER(owningPlayerID).GetTreasury()->ChangeBaseImprovementGoldMaintenance(-oldImprovementEntry.GetGoldMaintenance());
@@ -6513,7 +7058,7 @@ void CvPlot::setImprovementType(ImprovementTypes eNewValue, PlayerTypes eBuilder
 
 				// Siphon resource changes
 				PlayerTypes eOldBuilder = GetPlayerThatBuiltImprovement();
-				if(oldImprovementEntry.GetLuxuryCopiesSiphonedFromMinor() > 0 && eOldBuilder != NO_PLAYER)
+				if (oldImprovementEntry.GetLuxuryCopiesSiphonedFromMinor() > 0 && eOldBuilder != NO_PLAYER)
 				{
 					if (owningPlayer.isMinorCiv())
 					{
@@ -6522,21 +7067,21 @@ void CvPlot::setImprovementType(ImprovementTypes eNewValue, PlayerTypes eBuilder
 				}
 
 				// Update the amount of a Resource used up by the previous Improvement that is being removed
-				int iNumResourceInfos= GC.getNumResourceInfos();
-				for(int iResourceLoop = 0; iResourceLoop < iNumResourceInfos; iResourceLoop++)
+				int iNumResourceInfos = GC.getNumResourceInfos();
+				for (int iResourceLoop = 0; iResourceLoop < iNumResourceInfos; iResourceLoop++)
 				{
-					if(oldImprovementEntry.GetResourceQuantityRequirement(iResourceLoop) > 0)
+					if (oldImprovementEntry.GetResourceQuantityRequirement(iResourceLoop) > 0)
 					{
-						owningPlayer.changeNumResourceUsed((ResourceTypes) iResourceLoop, -oldImprovementEntry.GetResourceQuantityRequirement(iResourceLoop));
+						owningPlayer.changeNumResourceUsed((ResourceTypes)iResourceLoop, -oldImprovementEntry.GetResourceQuantityRequirement(iResourceLoop));
 					}
 				}
 			}
 
 			// Someone had built something here in an unowned plot, remove effects of the old improvement
-			if(GetPlayerResponsibleForImprovement() != NO_PLAYER)
+			if (GetPlayerResponsibleForImprovement() != NO_PLAYER)
 			{
 				// Maintenance change!
-				if(MustPayMaintenanceHere(GetPlayerResponsibleForImprovement()))
+				if (MustPayMaintenanceHere(GetPlayerResponsibleForImprovement()))
 				{
 #ifdef AUI_WARNING_FIXES
 					GET_PLAYER(GetPlayerResponsibleForImprovement()).GetTreasury()->ChangeBaseImprovementGoldMaintenance(-oldImprovementEntry.GetGoldMaintenance());
@@ -6551,13 +7096,13 @@ void CvPlot::setImprovementType(ImprovementTypes eNewValue, PlayerTypes eBuilder
 
 		m_eImprovementType = eNewValue;
 
-		if(getImprovementType() == NO_IMPROVEMENT)
+		if (getImprovementType() == NO_IMPROVEMENT)
 		{
 			setImprovementDuration(0);
 		}
 
 		// Reset who cleared a Barb camp here last (if we're putting a new one down)
-		if(eNewValue == GC.getBARBARIAN_CAMP_IMPROVEMENT())
+		if (eNewValue == GC.getBARBARIAN_CAMP_IMPROVEMENT())
 		{
 			SetPlayerThatClearedBarbCampHere(NO_PLAYER);
 		}
@@ -6569,42 +7114,60 @@ void CvPlot::setImprovementType(ImprovementTypes eNewValue, PlayerTypes eBuilder
 		SetImprovementPillaged(false);
 #endif
 
-		for(iI = 0; iI < MAX_TEAMS; ++iI)
+		for (iI = 0; iI < MAX_TEAMS; ++iI)
 		{
 #ifdef AUI_PLOT_OBSERVER_SEE_ALL_PLOTS
 			if (iI == OBSERVER_TEAM || GET_TEAM((TeamTypes)iI).isAlive())
 #else
-			if(GET_TEAM((TeamTypes)iI).isAlive())
+			if (GET_TEAM((TeamTypes)iI).isAlive())
 #endif
 			{
-				if(isVisible((TeamTypes)iI))
+				if (isVisible((TeamTypes)iI))
 				{
 					setRevealedImprovementType((TeamTypes)iI, eNewValue);
 				}
 			}
 		}
 
-		if(m_eImprovementType != NO_IMPROVEMENT)
+		if (m_eImprovementType != NO_IMPROVEMENT)
 		{
 			CvImprovementEntry& newImprovementEntry = *GC.getImprovementInfo(eNewValue);
 #if !defined (LEKMOD_ADJACENT_IMPROVEMENT_YIELD) // Fix visual Bug
 			// If this improvement can add culture to nearby improvements, update them as well
-			if(newImprovementEntry.GetCultureAdjacentSameType() > 0)
+			if (newImprovementEntry.GetCultureAdjacentSameType() > 0)
 #else
 			// If this improvement can add yields to nearby improvements, update them as well
 			if (newImprovementEntry.GetCultureAdjacentSameType() > 0 || newImprovementEntry.HasAnyAdjacencyYieldBonus())
 #endif
 			{
-				for(iI = 0; iI < NUM_DIRECTION_TYPES; iI++)
+				for (iI = 0; iI < NUM_DIRECTION_TYPES; iI++)
 				{
 					CvPlot* pAdjacentPlot = plotDirection(getX(), getY(), ((DirectionTypes)iI));
-					if(pAdjacentPlot && pAdjacentPlot->getImprovementType() == eNewValue)
+					if (pAdjacentPlot && pAdjacentPlot->getImprovementType() == eNewValue)
 					{
 						pAdjacentPlot->updateYield();
 					}
 				}
 			}
-
+#if defined(v35_TRAITIFY)
+			if (eBuilder != NO_PLAYER)
+			{
+				CvPlayerTraits* pTraits = GET_PLAYER(eBuilder).GetPlayerTraits();
+				int iClaimRange = pTraits->GetBuildCompleteTileClaimRange(eNewValue);
+				int iStealRange = pTraits->GetBuildCompleteTileStealRange(eNewValue);
+				if (iClaimRange > 0 || iStealRange > 0)
+				{
+					if (iClaimRange > 0)
+					{
+						PerformCultureBomb(eBuilder, iClaimRange, false);
+					}
+					if (iStealRange > 0)
+					{
+						PerformCultureBomb(eBuilder, iStealRange, true);
+					}
+				}
+			}
+#endif
 			if(area())
 			{
 				area()->changeNumImprovements(eNewValue, 1);
@@ -6788,6 +7351,37 @@ void CvPlot::setImprovementType(ImprovementTypes eNewValue, PlayerTypes eBuilder
 		{
 			setLayoutDirty(true);
 		}
+
+#if defined(LEKMOD_WATER_WALK_IMPROVEMENT_RULES)
+		{
+			CvImprovementEntry* pkOld = (eOldImprovement != NO_IMPROVEMENT) ? GC.getImprovementInfo(eOldImprovement) : NULL;
+			CvImprovementEntry* pkNew = (eNewValue != NO_IMPROVEMENT) ? GC.getImprovementInfo(eNewValue) : NULL;
+			if ((pkOld && pkOld->IsActsAsRoute()) || (pkNew && pkNew->IsActsAsRoute()))
+			{
+				setLayoutDirty(true);
+				for (int iDir = 0; iDir < NUM_DIRECTION_TYPES; ++iDir)
+				{
+					CvPlot* pAdj = plotDirection(getX(), getY(), (DirectionTypes)iDir);
+					if (pAdj)
+					{
+						pAdj->setLayoutDirty(true);
+					}
+				}
+			}
+		}
+		if (isWater() && IsAllowsWalkWater() && getRouteType() != NO_ROUTE)
+		{
+			setRouteType(NO_ROUTE);
+		}
+		if (bHadActiveWalkWater && !IsAllowsWalkWater())
+		{
+			DoHandleUnitsAfterWaterWalkLost();
+		}
+		else if (!bHadActiveWalkWater && IsAllowsWalkWater())
+		{
+			DoHandleUnitsAfterWaterWalkGained();
+		}
+#endif
 	}
 }
 
@@ -6805,8 +7399,29 @@ void CvPlot::SetImprovementPillaged(bool bPillaged)
 
 	if(bPillaged != bWasPillaged)
 	{
+#if defined(LEKMOD_WATER_WALK_IMPROVEMENT_RULES)
+		bool bWalkWaterImprovement = false;
+		if (getImprovementType() != NO_IMPROVEMENT)
+		{
+			CvImprovementEntry* pkImprovement = GC.getImprovementInfo(getImprovementType());
+			bWalkWaterImprovement = pkImprovement && pkImprovement->IsAllowsWalkWater();
+		}
+#endif
 		m_bImprovementPillaged = bPillaged;
 		updateYield();
+#if defined(LEKMOD_WATER_WALK_IMPROVEMENT_RULES)
+		if (bWalkWaterImprovement)
+		{
+			if (bPillaged && !IsAllowsWalkWater())
+			{
+				DoHandleUnitsAfterWaterWalkLost();
+			}
+			else if (!bPillaged && IsAllowsWalkWater())
+			{
+				DoHandleUnitsAfterWaterWalkGained();
+			}
+		}
+#endif
 #if defined(LEKMOD_POLICY_GREATPERSON_IMPROVEMENT_ADJACENCY_YIELD)
 		if (getImprovementType() != NO_IMPROVEMENT)
 		{
@@ -6817,7 +7432,24 @@ void CvPlot::SetImprovementPillaged(bool bPillaged)
 			}
 		}
 #endif
-
+#if defined(LEKMOD_BUGANDA_LAKE)
+		if (getImprovementType() != NO_IMPROVEMENT)
+		{
+			CvImprovementEntry* pkImprovementEntry = GC.getImprovementInfo(getImprovementType());
+			if (pkImprovementEntry->IsFreshWaterSource())
+			{
+				setPseudoLake(bPillaged);
+				for (int iI = 0; iI < NUM_DIRECTION_TYPES; iI++)
+				{
+					CvPlot* pAdjacentPlot = plotDirection(getX(), getY(), (DirectionTypes)iI);
+					if (pAdjacentPlot != NULL)
+					{
+						pAdjacentPlot->setFreshWater(bPillaged);
+					}
+				}
+			}	
+		}
+#endif
 		// Quantified Resource changes
 		if(getResourceType() != NO_RESOURCE && getImprovementType() != NO_IMPROVEMENT)
 		{
@@ -6825,7 +7457,11 @@ void CvPlot::SetImprovementPillaged(bool bPillaged)
 			{
 				if(GET_TEAM(getTeam()).GetTeamTechs()->HasTech((TechTypes) GC.getResourceInfo(getResourceType())->getTechCityTrade()))
 				{
+#ifdef LEKMOD_PRESERVE_UNDISCOVERED_RESOURCES_ON_REMOVE_IMPROVEMENT
+					if(DoesImprovementConnectResource(getResourceType()))
+#else
 					if(GC.getImprovementInfo(getImprovementType())->IsImprovementResourceTrade(getResourceType()))
+#endif
 					{
 						if(bPillaged)
 						{
@@ -7302,7 +7938,11 @@ void CvPlot::DoFindCityToLinkResourceTo(CvCity* pCityToExclude)
 		// Already have a valid improvement here?
 		if(isCity() || getImprovementType() != NO_IMPROVEMENT)
 		{
+#ifdef LEKMOD_PRESERVE_UNDISCOVERED_RESOURCES_ON_REMOVE_IMPROVEMENT
+			if(isCity() || DoesImprovementConnectResource(getResourceType()))
+#else
 			if(isCity() || GC.getImprovementInfo(getImprovementType())->IsImprovementResourceTrade(getResourceType()))
+#endif
 			{
 				SetResourceLinkedCityActive(true);
 			}
@@ -7614,35 +8254,41 @@ int CvPlot::calculateNatureYield(YieldTypes eYield, TeamTypes eTeam, bool bIgnor
 	{
 		iYield += kYield.getMountainChange();
 	}
-
+#if !defined(LEKMOD_BUGANDA_LAKE)
 	if(isLake())
 	{
 		iYield += kYield.getLakeChange();
+#else
+	if (isLake() || isPseudoLake())
+	{
+		iYield += isLake() ? kYield.getLakeChange() : 0;
+#endif
+
 #ifdef NQ_LAKE_BELIEF_BONUSES
-		if (pWorkingCity != NULL)
-		{
-			const CvReligion* pReligion = GC.getGame().GetGameReligions()->GetReligion(eMajority, pWorkingCity->getOwner());
-			if (pReligion)
+			if (pWorkingCity != NULL)
 			{
-				iYield += pReligion->m_Beliefs.GetFeatureYieldChange(FEATURE_ICE, eYield);
-				if (eSecondaryPantheon != NO_BELIEF)
+				const CvReligion* pReligion = GC.getGame().GetGameReligions()->GetReligion(eMajority, pWorkingCity->getOwner());
+				if (pReligion)
 				{
-					iYield += GC.GetGameBeliefs()->GetEntry(eSecondaryPantheon)->GetFeatureYieldChange(FEATURE_ICE, eYield);
+					iYield += pReligion->m_Beliefs.GetFeatureYieldChange(FEATURE_ICE, eYield);
+					if (eSecondaryPantheon != NO_BELIEF)
+					{
+						iYield += GC.GetGameBeliefs()->GetEntry(eSecondaryPantheon)->GetFeatureYieldChange(FEATURE_ICE, eYield);
+					}
 				}
 			}
-		}
 #endif
 #if defined(TRAITIFY) // Use Ice as a reference for the Lake feature, since its not a real feature
-		if (m_eOwner != NO_PLAYER)
-		{
-			// Improved or Not, change the Yield
-			iYield += GET_PLAYER((PlayerTypes)m_eOwner).GetPlayerTraits()->GetFeatureYieldChange(FEATURE_ICE, eYield);
-			if (getImprovementType() == NO_IMPROVEMENT)
+			if (m_eOwner != NO_PLAYER)
 			{
-				// Change the Yield only if the Feature is unimproved
-				iYield += GET_PLAYER((PlayerTypes)m_eOwner).GetPlayerTraits()->GetUnimprovedFeatureYieldChange(FEATURE_ICE, eYield);
+				// Improved or Not, change the Yield
+				iYield += GET_PLAYER((PlayerTypes)m_eOwner).GetPlayerTraits()->GetFeatureYieldChange(FEATURE_ICE, eYield);
+				if (getImprovementType() == NO_IMPROVEMENT)
+				{
+					// Change the Yield only if the Feature is unimproved
+					iYield += GET_PLAYER((PlayerTypes)m_eOwner).GetPlayerTraits()->GetUnimprovedFeatureYieldChange(FEATURE_ICE, eYield);
+				}
 			}
-		}
 #endif
 	}
 
@@ -8360,9 +9006,10 @@ int CvPlot::calculateYield(YieldTypes eYield, bool bDisplay)
 
 				if(pWorkingCity != NULL)
 				{
-					if(!bDisplay || pWorkingCity->isRevealed(GC.getGame().getActiveTeam(), false))
+					if (!bDisplay || pWorkingCity->isRevealed(GC.getGame().getActiveTeam(), false))
 					{
 						int iCityYield = 0;
+
 						if (isLake())
 						{
 							if (pWorkingCity->getLakePlotYield(eYield) > 0)
@@ -8391,7 +9038,21 @@ int CvPlot::calculateYield(YieldTypes eYield, bool bDisplay)
 
 			}
 		}
-
+#if defined(LEKMOD_BUGANDA_LAKE)
+		if (isPseudoLake())
+		{
+			if (pWorkingCity != NULL)
+			{
+				if (!bDisplay || pWorkingCity->isRevealed(GC.getGame().getActiveTeam(), false))
+				{
+					if (pWorkingCity->getLakePlotYield(eYield) > 0)
+					{
+						iYield += pWorkingCity->getLakePlotYield(eYield);
+					}
+				}
+			}
+		}
+#endif
 		if(isRiver())
 		{
 			if(!isImpassable() && !isMountain())
@@ -8441,14 +9102,12 @@ int CvPlot::calculateYield(YieldTypes eYield, bool bDisplay)
 		{
 			if(pWorkingCity != NULL)
 			{
-		
 				//pPlot = plotDirection(getX(), getY(), DIRECTION_NORTHEAST);
 				pWorkingCity = getWorkingCity();
 				//CvCity* pOwningCity = getOwningCity(pPlot);
 				CvPlayer &kPlayer = GET_PLAYER(ePlayer);
 				iYield += pWorkingCity->GetImprovementExtraYield(eImprovement, eYield);
 				iYield += kPlayer.GetImprovementExtraYield(eImprovement, eYield);
-		
 			}
 		}
 		// Extra yield for terrain
@@ -8563,7 +9222,6 @@ int CvPlot::calculateYield(YieldTypes eYield, bool bDisplay)
 		{
 			iYield += kPlayer.GetCoastalCityYieldChange(eYield);
 		}
-
 		// Capital Mod
 		if(pCity->isCapital())
 		{
@@ -8576,49 +9234,12 @@ int CvPlot::calculateYield(YieldTypes eYield, bool bDisplay)
 			iPerPopYield /= 100;
 			iYield += iPerPopYield;
 		}
-				
-#ifdef LEKMOD_v34
-		// Landmass yields from buildings
-		if (pCity != NULL)
-		{
-			int iCityLandmass = pCity->plot()->getLandmass();
-			CvPlayer &kPlayer = GET_PLAYER(getOwner());
-
-			// Check all player cities to see if any have buildings that affect this city's yield
-			int iLoop;
-			CvCity *pLoopCity;
-			for (pLoopCity = kPlayer.firstCity(&iLoop); pLoopCity != NULL; pLoopCity = kPlayer.nextCity(&iLoop))
-			{
-				int iBuildingLandmass = pLoopCity->plot()->getLandmass();
-
-				// Check all buildings in this city
-				for (int iBuildingLoop = 0; iBuildingLoop < GC.getNumBuildingInfos(); iBuildingLoop++)
-				{
-					BuildingTypes eBuilding = (BuildingTypes)iBuildingLoop;
-					if (pLoopCity->GetCityBuildings()->GetNumBuilding(eBuilding) > 0)
-					{
-						CvBuildingEntry *buildingEntry = GC.getBuildingInfo(eBuilding);
-						if (buildingEntry)
-						{
-							if (iCityLandmass == iBuildingLandmass)
-							{
-								// Same landmass
-								int iSameYield = buildingEntry->GetSameLandMassYieldChange(eBuilding, eYield);
-								iYield += iSameYield;
-							}
-							else
-							{
-								// Different landmass
-								int iDiffYield = buildingEntry->GetDifferentLandMassYieldChange(eBuilding, eYield);
-								iYield += iDiffYield;
-							}
-						}
-					}
-				}
-			}
-		}
+#if defined(LEKMOD_AREA_BASED_CITY_YIELD)
+		iTemp += pCity->area()->getCityYieldChange(pCity->getOwner(), eYield) * 100;
 #endif
-
+#if defined(LEKMOD_FREE_RESOURCE_CITY_GRANT)
+		iYield += pCity->GetYieldFromFreeResourceCity(eYield);
+#endif
 		iYield += (iTemp / 100);
 	}
 
@@ -8626,27 +9247,34 @@ int CvPlot::calculateYield(YieldTypes eYield, bool bDisplay)
 
 	if(ePlayer != NO_PLAYER)
 	{
-		if(GET_PLAYER(ePlayer).getExtraYieldThreshold(eYield) > 0)
+		CvPlayer& kPlayer = GET_PLAYER(ePlayer);
+		if(kPlayer.getExtraYieldThreshold(eYield) > 0)
 		{
-			if(iYield >= GET_PLAYER(ePlayer).getExtraYieldThreshold(eYield))
+			if(iYield >= kPlayer.getExtraYieldThreshold(eYield))
 			{
 				iYield += GC.getEXTRA_YIELD();
 			}
 		}
-
-		if(GET_PLAYER(ePlayer).isGoldenAge())
+		if(kPlayer.isGoldenAge())
 		{
 			if(iYield >= kYield.getGoldenAgeYieldThreshold())
 			{
 				iYield += kYield.getGoldenAgeYield();
 			}
-#ifdef NQ_GOLDEN_PILGRIMAGE
-			// this is super hacky, I am a bad person and I should feel bad...
-			if (eYield == YIELD_FAITH && calculateYield(YIELD_GOLD, bDisplay) > 0)
+#if defined(LEKMOD_GOLDEN_AGE_YIELD_THRESHOLD)
+			const std::vector<GoldenAgeYieldThreshold>& thresholds = kPlayer.GetPlayerTraits()->GetGoldenAgeYieldThresholdBonus();
+			for (size_t i = 0; i < thresholds.size(); ++i)
 			{
-				iYield += GET_PLAYER(ePlayer).GetPlayerTraits()->GetGoldenAgeTileBonusFaith();
+				const GoldenAgeYieldThreshold& kThreshold = thresholds[i];
+				if (kThreshold.m_eRwdYield != eYield)
+					continue;
+
+				int iThresholdYield = kThreshold.m_eThresholdYield == eYield ? iYield : calculateYield(kThreshold.m_eThresholdYield, bDisplay);
+				if (iThresholdYield >= kThreshold.m_iThresholdAmount)
+				{
+					iYield += kThreshold.m_iRwdAmount;
+				}
 			}
-//int CvPlot::getYieldWithBuild(BuildTypes eBuild, YieldTypes eYield, bool bWithUpgrade, PlayerTypes ePlayer) const
 #endif
 		}
 	}
@@ -9966,10 +10594,49 @@ bool CvPlot::changeBuildProgress(BuildTypes eBuild, int iChange, PlayerTypes ePl
 				{
 					if (getResourceType() != NO_RESOURCE)
 					{
+#ifdef LEKMOD_PRESERVE_UNDISCOVERED_RESOURCES_ON_REMOVE_IMPROVEMENT
+						// Only remove resources the builder can already see; leave undiscovered ones in place
+						TeamTypes eBuilderTeam = (ePlayer != NO_PLAYER) ? GET_PLAYER(ePlayer).getTeam() : NO_TEAM;
+						if (eBuilderTeam != NO_TEAM && getResourceType(eBuilderTeam) != NO_RESOURCE)
+						{
+							setResourceType(NO_RESOURCE, 0);
+						}
+#elif defined(LEKMOD_RELOCATE_RESOURCE)
+						// if there was a resource here, but the team can't see it then Move it instead of deleting it.
+						if (getResourceType(GET_PLAYER(getOwner()).getTeam()) == NO_RESOURCE)
+						{
+							CvCity* city;
+							// plot has a city related to it.
+							if (GetCityPurchaseID() > -1)
+							{
+								city = kPlayer.getCity(GetCityPurchaseID());
+							}
+							else // find nearest city.
+							{
+								city = kPlayer.findBestCityForGoody(this);
+							}
+							city->addResourceLocally(this, getResourceType(), getNumResource());
+						}
 						setResourceType(NO_RESOURCE, 0);
+#else
+						setResourceType(NO_RESOURCE, 0);
+#endif
 					}
 				}
-
+#if defined(LEKMOD_BUGANDA_LAKE)
+				if (newImprovementEntry.IsFreshWaterSource())
+				{
+					setPseudoLake(true);
+					for (int iI = 0; iI < NUM_DIRECTION_TYPES; ++iI)
+					{
+						CvPlot* pLoopPlot = plotDirection(getX(), getY(), ((DirectionTypes)iI));
+						if (pLoopPlot != NULL)
+						{
+							pLoopPlot->setFreshWater(true);
+						}
+					}
+				}
+#endif
 				// If we want to prompt the user about archaeology, let's record that
 				if (newImprovementEntry.IsPromptWhenComplete())
 				{
@@ -10037,6 +10704,10 @@ bool CvPlot::changeBuildProgress(BuildTypes eBuild, int iChange, PlayerTypes ePl
 			// Constructed Route
 			if(pkBuildInfo->getRoute() != NO_ROUTE)
 			{
+#if defined(LEKMOD_WATER_WALK_IMPROVEMENT_RULES)
+				if (!IsAllowsWalkWater())
+#endif
+				{
 				const RouteTypes eRoute = (RouteTypes)pkBuildInfo->getRoute();
 				CvRouteInfo* pkRouteInfo = GC.getRouteInfo(eRoute);
 				if(pkRouteInfo)
@@ -10052,6 +10723,7 @@ bool CvPlot::changeBuildProgress(BuildTypes eBuild, int iChange, PlayerTypes ePl
 						}
 						SetPlayerResponsibleForRoute(ePlayer);
 					}
+				}
 				}
 			}
 
@@ -10109,6 +10781,20 @@ bool CvPlot::changeBuildProgress(BuildTypes eBuild, int iChange, PlayerTypes ePl
 			{
 				setRouteType(NO_ROUTE);
 			}
+#if defined(LEKMOD_WATER_WALK_IMPROVEMENT_RULES)
+			if (pkBuildInfo->IsRemoveWaterCrossing())
+			{
+				ImprovementTypes eExisting = getImprovementType();
+				if (eExisting != NO_IMPROVEMENT)
+				{
+					CvImprovementEntry* pkExisting = GC.getImprovementInfo(eExisting);
+					if (pkExisting && pkExisting->IsAllowsWalkWater())
+					{
+						setImprovementType(NO_IMPROVEMENT);
+					}
+				}
+			}
+#endif
 
 			bFinished = true;
 
@@ -10739,6 +11425,10 @@ void CvPlot::read(FDataStream& kStream)
 	m_bBarbCampNotConverting = bitPackWorkaround;
 	kStream >> bitPackWorkaround;
 	m_bRoughFeature = bitPackWorkaround;
+#if defined(LEKMOD_BUGANDA_LAKE)
+	kStream >> bitPackWorkaround;
+	m_bPseudoLake = bitPackWorkaround;
+#endif
 	kStream >> bitPackWorkaround;
 	m_bResourceLinkedCityActive = bitPackWorkaround;
 	kStream >> bitPackWorkaround;
@@ -10957,6 +11647,9 @@ void CvPlot::write(FDataStream& kStream) const
 #endif
 	kStream << m_bBarbCampNotConverting;
 	kStream << m_bRoughFeature;
+#if defined(LEKMOD_BUGANDA_LAKE)
+	kStream << m_bPseudoLake;
+#endif
 	kStream << m_bResourceLinkedCityActive;
 	kStream << m_bImprovedByGiftFromMajor;
 
@@ -11156,9 +11849,26 @@ void CvPlot::updateLayout(bool bDebug)
 	}
 
 	RouteTypes eRoute = getRevealedRouteType(eActiveTeam, bDebug);
+#if defined(LEKMOD_WATER_WALK_IMPROVEMENT_RULES)
+	const RouteTypes eRevealedRoute = eRoute;
+	if (eRoute == NO_ROUTE && eFOWMode == FOGOFWARMODE_OFF)
+	{
+		eRoute = GetEffectiveRouteType(eActiveTeam);
+	}
+	// ActsAsRoute pontoons: pass eRoute so adjacent roads stub toward this plot,
+	// but do not assign ROAD_REGULAR / RR_REGULAR (that draws a mesh on the water).
+	const bool bActsAsRouteOnly = (eRevealedRoute == NO_ROUTE && eRoute != NO_ROUTE);
+#endif
 	byte eRoadTypeValue = NUM_ROAD_RR_TYPES;
 	if(eRoute != NO_ROUTE)
 	{
+#if defined(LEKMOD_WATER_WALK_IMPROVEMENT_RULES)
+		if (bActsAsRouteOnly)
+		{
+			// Keep eRoute; leave eRoadTypeValue as NUM_ROAD_RR_TYPES.
+		}
+		else
+#endif
 		switch(eRoute)
 		{
 		case ROUTE_ROAD:
@@ -11241,6 +11951,13 @@ void CvPlot::updateLayout(bool bDebug)
 	}
 
 	auto_ptr<ICvPlot1> pDllPlot(new CvDllPlot(this));
+#if defined(LEKMOD_WATER_WALK_IMPROVEMENT_RULES)
+	const bool bHideWalkWaterRoadMesh = isWater() && IsAllowsWalkWater() && bActsAsRouteOnly;
+	if (bHideWalkWaterRoadMesh)
+	{
+		CvDllPlot::PushGameplayWaterOverride();
+	}
+#endif
 	gDLL->GameplayPlotStateChange
 	(
 	    pDllPlot.get(),
@@ -11250,6 +11967,12 @@ void CvPlot::updateLayout(bool bDebug)
 	    eRoute,
 	    eRoadTypeValue
 	);
+#if defined(LEKMOD_WATER_WALK_IMPROVEMENT_RULES)
+	if (bHideWalkWaterRoadMesh)
+	{
+		CvDllPlot::PopGameplayWaterOverride();
+	}
+#endif
 }
 
 //	--------------------------------------------------------------------------------
@@ -11502,10 +12225,14 @@ int CvPlot::getYieldWithBuild(BuildTypes eBuild, YieldTypes eYield, bool bWithUp
 
 						// Worked lake plot
 						if(pWorkingCity->getLakePlotYield(eYield) > 0 && isLake())
+						{
 							iCityYield = pWorkingCity->getLakePlotYield(eYield);
+						}
 						// Worked sea plot
 						else
+						{
 							iCityYield = pWorkingCity->getSeaPlotYield(eYield);
+						}
 
 						iYield += iCityYield;
 					}
@@ -11523,7 +12250,18 @@ int CvPlot::getYieldWithBuild(BuildTypes eBuild, YieldTypes eYield, bool bWithUp
 
 			}
 		}
-
+#if defined(LEKMOD_BUGANDA_LAKE)
+		if (isPseudoLake())
+		{
+			if (pWorkingCity != NULL)
+			{
+				if (pWorkingCity->isRevealed(eTeam, false))
+				{
+					iYield += pWorkingCity->getLakePlotYield(eYield);
+				}
+			}
+		}
+#endif
 		// Worked river plot
 		if(isRiver())
 		{
@@ -11642,27 +12380,38 @@ int CvPlot::getYieldWithBuild(BuildTypes eBuild, YieldTypes eYield, bool bWithUp
 
 	if(ePlayer != NO_PLAYER)
 	{
-		if(GET_PLAYER(ePlayer).getExtraYieldThreshold(eYield) > 0)
+		CvPlayer& kPlayer = GET_PLAYER(ePlayer);
+		if(kPlayer.getExtraYieldThreshold(eYield) > 0)
 		{
-			if(iYield >= GET_PLAYER(ePlayer).getExtraYieldThreshold(eYield))
+			if(iYield >= kPlayer.getExtraYieldThreshold(eYield))
 			{
 				iYield += GC.getEXTRA_YIELD();
 			}
 		}
 
-		if(GET_PLAYER(ePlayer).isGoldenAge())
+		if(kPlayer.isGoldenAge())
 		{
 			if(iYield >= kYield.getGoldenAgeYieldThreshold())
 			{
 				iYield += kYield.getGoldenAgeYield();
 			}
-#ifdef NQ_GOLDEN_PILGRIMAGE
-			// this is super hacky, I am a bad person and I should feel bad...
-			if (eYield == YIELD_FAITH && getYieldWithBuild(eBuild, YIELD_GOLD, bWithUpgrade, ePlayer) > 0)
+#if defined(LEKMOD_GOLDEN_AGE_YIELD_THRESHOLD)
+			const std::vector<GoldenAgeYieldThreshold>& thresholds = kPlayer.GetPlayerTraits()->GetGoldenAgeYieldThresholdBonus();
+			for (size_t i = 0; i < thresholds.size(); ++i)
 			{
-				iYield += GET_PLAYER(ePlayer).GetPlayerTraits()->GetGoldenAgeTileBonusFaith();
+				const GoldenAgeYieldThreshold& kThreshold = thresholds[i];
+				if (kThreshold.m_eRwdYield != eYield)
+					continue;
+
+				int iThresholdYield = kThreshold.m_eThresholdYield == eYield ? iYield : getYieldWithBuild(eBuild, kThreshold.m_eThresholdYield, bWithUpgrade, ePlayer);
+				if (iThresholdYield >= kThreshold.m_iThresholdAmount)
+				{
+					if (iThresholdYield >= kThreshold.m_iThresholdAmount)
+					{
+						iYield += kThreshold.m_iRwdAmount;
+					}
+				}
 			}
-//int CvPlot::getYieldWithBuild(BuildTypes eBuild, YieldTypes eYield, bool bWithUpgrade, PlayerTypes ePlayer) const
 #endif
 		}
 	}
@@ -12065,3 +12814,164 @@ void CvPlot::updateImpassable()
 		}
 	}
 }
+#if defined(v35_TRAITIFY)
+//	--------------------------------------------------------------------------------
+void CvPlot::PerformCultureBomb(PlayerTypes eCulprit, int iRadius, bool bSteal, bool bImpactDiplo)
+{
+	if (iRadius <= 0)
+		return;
+
+	const bool bForceNeutral = (eCulprit == NO_PLAYER);
+
+	CvPlayerAI* pCulpritPlayer = NULL;
+	TeamTypes eCulpritTeam = NO_TEAM;
+
+	if (!bForceNeutral)
+	{
+		pCulpritPlayer = &GET_PLAYER(eCulprit);
+		eCulpritTeam = pCulpritPlayer->getTeam();
+	}
+
+	// Figure out which city gets ownership of these plots.
+	int iBestCityID = -1;
+
+	if (!bForceNeutral)
+	{
+		if (getOwner() == eCulprit && GetCityPurchaseID() != -1)
+		{
+			iBestCityID = GetCityPurchaseID();
+		}
+		else
+		{
+			int iBestCityDistance = -1;
+
+			CvCity* pLoopCity = NULL;
+			int iLoop = 0;
+			for (pLoopCity = pCulpritPlayer->firstCity(&iLoop); pLoopCity != NULL; pLoopCity = pCulpritPlayer->nextCity(&iLoop))
+			{
+				CvPlot* pCityPlot = pLoopCity->plot();
+				if (pCityPlot == NULL)
+					continue;
+
+				const int iDistance = plotDistance(getX(), getY(), pLoopCity->getX(), pLoopCity->getY());
+
+				if (iBestCityDistance == -1 || iDistance < iBestCityDistance)
+				{
+					iBestCityID = pLoopCity->GetID();
+					iBestCityDistance = iDistance;
+				}
+			}
+		}
+	}
+
+	// Keep track of who got hit so we can handle diplo after ownership changes.
+	FStaticVector<bool, MAX_CIV_PLAYERS, true, c_eCiv5GameplayDLL, 0> vePlayersBombed;
+	for (int iPlayerLoop = 0; iPlayerLoop < MAX_CIV_PLAYERS; iPlayerLoop++)
+	{
+		vePlayersBombed.push_back(false);
+	}
+
+	CvPlot* pLoopPlot = NULL;
+	for (int i = -iRadius; i <= iRadius; ++i)
+	{
+		for (int j = -iRadius; j <= iRadius; ++j)
+		{
+			pLoopPlot = ::plotXYWithRangeCheck(getX(), getY(), i, j, iRadius);
+			if (pLoopPlot == NULL)
+				continue;
+			if (pLoopPlot->isCity())
+				continue;
+
+			const PlayerTypes eOldOwner = pLoopPlot->getOwner();
+			if (bForceNeutral)
+			{
+				if (eOldOwner == NO_PLAYER)
+					continue;
+			}
+			else
+			{
+				if (eOldOwner == eCulprit)
+					continue;
+				if (eOldOwner != NO_PLAYER && !bSteal)
+					continue;
+			}
+
+			// Track victims and notify them before changing ownership.
+			if (!bForceNeutral && bSteal && eOldOwner != NO_PLAYER)
+			{
+				if (!vePlayersBombed[eOldOwner])
+				{
+					CvNotifications* pNotifications = GET_PLAYER(eOldOwner).GetNotifications();
+					if (pNotifications)
+					{
+						CvString strBuffer = GetLocalizedText(
+							"TXT_KEY_NOTIFICATION_GREAT_ARTIST_STOLE_PLOT",
+							GET_PLAYER(eCulprit).getNameKey()
+						);
+
+						CvString strSummary = GetLocalizedText(
+							"TXT_KEY_NOTIFICATION_SUMMARY_GREAT_ARTIST_STOLE_PLOT",
+							GET_PLAYER(eCulprit).getNameKey()
+						);
+
+						pNotifications->Add(NOTIFICATION_GENERIC, strBuffer, strSummary, pLoopPlot->getX(), pLoopPlot->getY(), -1);
+					}
+				}
+
+				vePlayersBombed[eOldOwner] = true;
+			}
+
+			// Have to set owner after notifications/tracking.
+			if (bForceNeutral)
+			{
+				pLoopPlot->setOwner(NO_PLAYER, -1);
+			}
+			else
+			{
+				pLoopPlot->setOwner(eCulprit, iBestCityID);
+			}
+		}
+	}
+
+	// No diplomatic effect for neutralization, neutral-only claiming, or disabled diplo.
+	if (!bImpactDiplo || !bSteal || bForceNeutral)
+		return;
+
+	bool bAlreadyShownLeader = false;
+
+	for (int iSlotLoop = 0; iSlotLoop < MAX_CIV_PLAYERS; iSlotLoop++)
+	{
+		if (!vePlayersBombed[iSlotLoop])
+			continue;
+
+		CvPlayer* pVictim = &GET_PLAYER((PlayerTypes)iSlotLoop);
+		TeamTypes eVictimTeam = pVictim->getTeam();
+
+		// Humans can handle their own diplo.
+		if (pVictim->isHuman())
+			continue;
+
+		// Minor civ response.
+		if (pVictim->isMinorCiv())
+		{
+			const int iFriendship = GC.getCULTURE_BOMB_MINOR_FRIENDSHIP_CHANGE();
+			pVictim->GetMinorCivAI()->ChangeFriendshipWithMajor(eCulprit, iFriendship);
+		}
+		// Major civ response.
+		else
+		{
+			pVictim->GetDiplomacyAI()->ChangeNumTimesCultureBombed(eCulprit, 1);
+
+			// Message for human culprit.
+			if (eCulpritTeam != eVictimTeam && !GET_TEAM(eVictimTeam).isAtWar(eCulpritTeam) && !CvPreGame::isNetworkMultiplayerGame() && GC.getGame().getActivePlayer() == eCulprit && !bAlreadyShownLeader)
+			{
+				bAlreadyShownLeader = true;
+
+				DLLUI->SetForceDiscussionModeQuitOnBack(true);
+				const char* strText = pVictim->GetDiplomacyAI()->GetDiploStringForMessage(DIPLO_MESSAGE_CULTURE_BOMBED);
+				gDLL->GameplayDiplomacyAILeaderMessage( pVictim->GetID(), DIPLO_UI_STATE_BLANK_DISCUSSION, strText, LEADERHEAD_ANIM_HATE_NEGATIVE);
+			}
+		}
+	}
+}
+#endif

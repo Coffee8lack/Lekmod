@@ -6,6 +6,9 @@ set euifolder=UI_bc1_xits
 IF EXIST "UI_bc1" (
   set euifolder=UI_bc1
 )
+IF EXIST "%patchfolder%\Lua\UI\CityStatePersonalityHelper.lua" (
+  copy /y "%patchfolder%\Lua\UI\CityStatePersonalityHelper.lua" "%patchfolder%\CityStatePersonalityHelper.lua.bak" > nul
+)
 DEL /q "%patchfolder%\Lua\UI\"
 REM --------------------------------------------------------------------------------------------------
 copy /y "%patchfolder%\Lua\tmp\ui\AncientRuins\GoodyHutPopup.lua.ignore" "%patchfolder%\Lua\UI\GoodyHutPopup.lua" > nul
@@ -68,6 +71,8 @@ IF NOT EXIST "%euifolder%\EconomicGeneralInfo.lua" (
 REM --------------------------------------------------------------------------------------------------
 copy /y "%patchfolder%\Lua\tmp\ui\FrontEnd\EULA.lua.ignore" "%patchfolder%\Lua\UI\EULA.lua" > nul
 copy /y "%patchfolder%\Lua\tmp\ui\FrontEnd\FrontEnd.lua.ignore" "%patchfolder%\Lua\UI\FrontEnd.lua" > nul
+copy /y "%patchfolder%\Lua\tmp\ui\FrontEnd\MainMenu.lua.ignore" "%patchfolder%\Lua\UI\MainMenu.lua" > nul
+copy /y "%patchfolder%\Lua\tmp\ui\FrontEnd\MainMenu.xml.ignore" "%patchfolder%\Lua\UI\MainMenu.xml" > nul
 REM --------------------------------------------------------------------------------------------------
 IF NOT EXIST "%euifolder%\GameSetup\SelectCivilization.lua" (
   copy /y "%patchfolder%\Lua\tmp\ui\GameSetup\SelectCivilization.lua.ignore" "%patchfolder%\Lua\UI\SelectCivilization.lua" > nul
@@ -143,10 +148,12 @@ REM ----------------------------------------------------------------------------
 IF NOT EXIST "%euifolder%\TechTree\TechTree.lua" (
   copy /y "%patchfolder%\Lua\tmp\ui\TechTree\TechPopup.lua.ignore" "%patchfolder%\Lua\UI\TechPopup.lua" > nul
   copy /y "%patchfolder%\Lua\tmp\ui\TechTree\TechTree.lua.ignore" "%patchfolder%\Lua\UI\TechTree.lua" > nul
+  copy /y "%patchfolder%\Lua\tmp\ui\TechTree\TechTree.xml.ignore" "%patchfolder%\Lua\UI\TechTree.xml" > nul
 ) ELSE (
   copy /y "%patchfolder%\Lua\tmp\eui\TechTree\TechPopup.lua.ignore" "%patchfolder%\Lua\UI\TechPopup.lua" > nul
   copy /y "%patchfolder%\Lua\tmp\eui\TechTree\TechPopup.xml.ignore" "%patchfolder%\Lua\UI\TechPopup.xml" > nul
   copy /y "%patchfolder%\Lua\tmp\eui\TechTree\TechTree.lua.ignore" "%patchfolder%\Lua\UI\TechTree.lua" > nul
+  copy /y "%patchfolder%\Lua\tmp\eui\TechTree\TechTree.xml.ignore" "%patchfolder%\Lua\UI\TechTree.xml" > nul
 )
 REM --------------------------------------------------------------------------------------------------
 IF NOT EXIST "%euifolder%\ToolTips\TechButtonInclude.lua" (
@@ -172,6 +179,8 @@ copy /y "%patchfolder%\Lua\tmp\ui\UnitList\UnitList.lua.ignore" "%patchfolder%\L
 copy /y "%patchfolder%\Lua\tmp\ui\UnitList\UnitList.xml.ignore" "%patchfolder%\Lua\UI\UnitList.xml" > nul
 REM --------------------------------------------------------------------------------------------------
 copy /y "%patchfolder%\Lua\tmp\ui\UnitPanel\EnemyUnitPanel.lua.ignore" "%patchfolder%\Lua\UI\EnemyUnitPanel.lua" > nul
+copy /y "%patchfolder%\Lua\tmp\ui\UnitPanel\EnemyUnitPanel.xml.ignore" "%patchfolder%\Lua\UI\EnemyUnitPanel.xml" > nul
+copy /y "%patchfolder%\Lua\tmp\ui\UnitPanel\EnemyUnitPanel_small.xml.ignore" "%patchfolder%\Lua\UI\EnemyUnitPanel_small.xml" > nul
 set text="-- modified by bc1 from Civ V 1.0.3.276 code"
 FIND %text% "%euifolder%\UnitPanel\UnitPanel.lua" > nul 2>&1 && (
   copy /y "%patchfolder%\Lua\tmp\eui\UnitPanel\UnitPanel.lua.ignore" "%patchfolder%\Lua\UI\UnitPanel.lua" > nul
@@ -199,8 +208,6 @@ copy /y "%patchfolder%\Lua\tmp\ui\InGame.lua.ignore" "%patchfolder%\Lua\UI\InGam
 copy /y "%patchfolder%\Lua\tmp\ui\ActionInfoPanel.lua.ignore" "%patchfolder%\Lua\UI\ActionInfoPanel.lua" > nul
 copy /y "%patchfolder%\Lua\tmp\ui\ActionInfoPanel.xml.ignore" "%patchfolder%\Lua\UI\ActionInfoPanel.xml" > nul
 REM --------------------------------------------------------------------------------------------------
-copy /y "%patchfolder%\Lua\tmp\ui\mountain.lua.ignore" "%patchfolder%\Lua\UI\mountain.lua" > nul
-REM --------------------------------------------------------------------------------------------------
 copy /y "%patchfolder%\Lua\tmp\ui\prophetreplace.lua.ignore" "%patchfolder%\Lua\UI\prophetreplace.lua" > nul
 REM --------------------------------------------------------------------------------------------------
 IF NOT EXIST "%euifolder%\Improvements\YieldIconManager.lua" (
@@ -215,5 +222,19 @@ IF NOT EXIST "%euifolder%\TopPanel\TopPanel.lua" (
   copy /y "%patchfolder%\Lua\tmp\eui\TopPanel.lua.ignore" "%patchfolder%\Lua\UI\TopPanel.lua" > nul
   copy /y "%patchfolder%\Lua\tmp\eui\TopPanel.xml.ignore" "%patchfolder%\Lua\UI\TopPanel.xml" > nul
 )
+REM --------------------------------------------------------------------------------------------------
+IF EXIST "%patchfolder%\CityStatePersonalityHelper.lua.bak" (
+  copy /y "%patchfolder%\CityStatePersonalityHelper.lua.bak" "%patchfolder%\Lua\UI\CityStatePersonalityHelper.lua" > nul
+  del "%patchfolder%\CityStatePersonalityHelper.lua.bak"
+)
+REM --------------------------------------------------------------------------------------------------
+IF NOT EXIST "%euifolder%\Improvements\SocialPolicyPopup.lua" (
+  copy /y "%patchfolder%\Lua\tmp\ui\ToolTips\SocialPolicyPopup.lua.ignore" "%patchfolder%\Lua\UI\SocialPolicyPopup.lua" > nul
+) ELSE (
+  copy /y "%patchfolder%\Lua\tmp\eui\Improvements\SocialPolicyPopup.lua.ignore" "%patchfolder%\Lua\UI\SocialPolicyPopup.lua" > nul
+)
+copy /y "%patchfolder%\Lua\tmp\ui\Popups\ChooseInternationalTradeRoutePopup.lua.ignore" "%patchfolder%\Lua\UI\ChooseInternationalTradeRoutePopup.lua" > nul
+copy /y "%patchfolder%\Lua\tmp\ui\Popups\TradeRouteOverview.lua.ignore" "%patchfolder%\Lua\UI\TradeRouteOverview.lua" > nul
+copy /y "%patchfolder%\Lua\tmp\ui\ToolTips\TradeRouteHelpers.lua.ignore" "%patchfolder%\Lua\UI\TradeRouteHelpers.lua" > nul
 REM --------------------------------------------------------------------------------------------------
 EXIT

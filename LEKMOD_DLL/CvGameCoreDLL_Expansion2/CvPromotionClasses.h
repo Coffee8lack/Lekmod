@@ -131,6 +131,9 @@ public:
 	int  GetCommandType() const;
 	void SetCommandType(int iNewType);
 
+	int GetPillageChange() const { return m_iPillageChange; }
+	int GetPillageXPChange() const { return m_iPillageXPChange; }
+	int GetPillageHealChange() const { return m_iPillageHealChange; }
 	int GetUpgradeDiscount() const;
 	int GetExperiencePercent() const;
 	int GetAdjacentMod() const;
@@ -154,6 +157,12 @@ public:
 	
 	int GetTradeMissionInfluenceModifier() const;
 	int GetTradeMissionGoldModifier() const;
+#if defined(v35_TRAITIFY)
+	int GetNearbyWaterCombatModifier() const { return m_iNearbyWaterCombatModifier; }
+	int GetAttackExtraMoves() const { return m_iAttackExtraMoves; }
+	bool IsKillRefreshMove() const { return m_bKillRefreshMove; }
+	bool IsKillRefreshAttack() const { return m_bKillRefreshAttack; }
+#endif
 
 	bool IsCannotBeChosen() const;
 	bool IsLostWithUpgrade() const;
@@ -224,6 +233,10 @@ public:
 	int GetUnitCombatModifierPercent(uint i) const;
 	int GetUnitClassModifierPercent(uint i) const;
 	int GetDomainModifierPercent(uint i) const;
+#if defined(LEKMOD_DOMAIN_PROMO_ATTACK_DEFENSE)
+	int GetDomainAttackPercent(uint i) const;
+	int GetDomainDefensePercent(uint i) const;
+#endif
 	int GetFeaturePassableTech(uint i) const;
 	int GetUnitClassAttackModifier(uint i) const;
 	int GetUnitClassDefenseModifier(uint i) const;
@@ -244,6 +257,10 @@ public:
 	int GetUnitCombatModifierPercent(int i) const;
 	int GetUnitClassModifierPercent(int i) const;
 	int GetDomainModifierPercent(int i) const;
+#if defined(LEKMOD_DOMAIN_PROMO_ATTACK_DEFENSE)
+	int GetDomainAttackPercent(int i) const;
+	int GetDomainDefensePercent(int i) const;
+#endif
 	int GetFeaturePassableTech(int i) const;
 	int GetUnitClassAttackModifier(int i) const;
 	int GetUnitClassDefenseModifier(int i) const;
@@ -361,6 +378,9 @@ protected:
 	bool m_bSubmergePromotion;
 #endif
 	int m_iCommandType;
+	int m_iPillageChange;
+	int m_iPillageXPChange;
+	int m_iPillageHealChange;
 	int m_iUpgradeDiscount;
 	int m_iExperiencePercent;
 	int m_iAdjacentMod;
@@ -382,6 +402,12 @@ protected:
 	int m_iReligiousStrengthLossRivalTerritory;
 	int m_iTradeMissionInfluenceModifier;
 	int m_iTradeMissionGoldModifier;
+#if defined(v35_TRAITIFY)
+	int m_iNearbyWaterCombatModifier;
+	int m_iAttackExtraMoves;
+	bool m_bKillRefreshMove;
+	bool m_bKillRefreshAttack;
+#endif
 
 	bool m_bCannotBeChosen;
 	bool m_bLostWithUpgrade;
@@ -461,6 +487,10 @@ protected:
 	int* m_piUnitCombatModifierPercent;
 	int* m_piUnitClassModifierPercent;
 	int* m_piDomainModifierPercent;
+#if defined(LEKMOD_DOMAIN_PROMO_ATTACK_DEFENSE)
+	int* m_piDomainAttackPercent;
+	int* m_piDomainDefensePercent;
+#endif
 
 	int* m_piUnitClassAttackModifier;
 	int* m_piUnitClassDefenseModifier;
@@ -541,6 +571,10 @@ public:
 
 	int GetUnitClassAttackMod(UnitClassTypes eUnitClass) const;
 	int GetUnitClassDefenseMod(UnitClassTypes eUnitClass) const;
+#if defined(LEKMOD_DOMAIN_PROMO_ATTACK_DEFENSE)
+	int GetDomainAttackMod(DomainTypes eDomain) const;
+	int GetDomainDefenseMod(DomainTypes eDomain) const;
+#endif
 
 	PromotionTypes ChangePromotionAfterCombat(PromotionTypes eIndex);
 

@@ -1842,6 +1842,29 @@ function RefreshGameOptions()
 				option.Checked = savedValue == 1;
 			end
 
+			-- Quick Combat / Movement have TWO PreGame stores: GameOption and SetQuick*.
+			-- Lobby checkboxes only wrote GameOption; MP setup writes SetQuick* from
+			-- OptionsManager. Keep them in sync so lobby saves keep the intended value.
+			if option.Type == "GAMEOPTION_QUICK_COMBAT" or option.Type == "GAMEOPTION_QUICK_MOVEMENT" then
+				local apiOn = false;
+				if option.Type == "GAMEOPTION_QUICK_COMBAT" and PreGame.GetQuickCombat ~= nil then
+					apiOn = PreGame.GetQuickCombat() == true;
+				elseif option.Type == "GAMEOPTION_QUICK_MOVEMENT" and PreGame.GetQuickMovement ~= nil then
+					apiOn = PreGame.GetQuickMovement() == true;
+				end
+				if savedValue ~= nil then
+					option.Checked = savedValue == 1;
+					if option.Type == "GAMEOPTION_QUICK_COMBAT" and PreGame.SetQuickCombat ~= nil then
+						PreGame.SetQuickCombat(option.Checked);
+					elseif option.Type == "GAMEOPTION_QUICK_MOVEMENT" and PreGame.SetQuickMovement ~= nil then
+						PreGame.SetQuickMovement(option.Checked);
+					end
+				else
+					option.Checked = apiOn;
+					PreGame.SetGameOption(option.Type, apiOn);
+				end
+			end
+
 			-- Only show non-singleplayer options in network multiplayer 
 			-- The turn timer ends up being an exception to this because we manually add the UI for that option.
 			local DontDisplay = (PreGame.IsHotSeatGame() and not option.SupportsSinglePlayer) 
@@ -1901,6 +1924,12 @@ function RefreshGameOptions()
 		if(option.GameOption == true) then
 			gameOption.GameOptionRoot:RegisterCheckHandler( function(bCheck)
 				PreGame.SetGameOption(option.Type, bCheck);
+				-- Keep dedicated Quick* flags aligned (used by MP setup + runtime/DLL).
+				if option.Type == "GAMEOPTION_QUICK_COMBAT" and PreGame.SetQuickCombat ~= nil then
+					PreGame.SetQuickCombat(bCheck);
+				elseif option.Type == "GAMEOPTION_QUICK_MOVEMENT" and PreGame.SetQuickMovement ~= nil then
+					PreGame.SetQuickMovement(bCheck);
+				end
 				SendGameOptionChanged();
 				if(option.Type == "GAMEOPTION_PITBOSS") then
 					RefreshTurnTimerUnits();

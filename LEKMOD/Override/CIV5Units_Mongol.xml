@@ -12,28 +12,987 @@
 	<Language_en_US>
 		<!-- Version Number, Leave at top -->
 		<Row Tag="TXT_KEY_LEKMOD_VERSION">
-			<Text>LEKMOD v34.15</Text>
+			<Text>LEKMOD v35.006</Text>
 		</Row>
 		<Replace Tag="TXT_KEY_MULTIPLAYER_STAGING_ROOM"> 
 			<Text>
-				[COLOR_POSITIVE_TEXT]LEKMOD v34.15[ENDCOLOR]
+				[COLOR_POSITIVE_TEXT]LEKMOD v35[ENDCOLOR]
 			</Text>
 		</Replace>
 		<Replace Tag="TXT_KEY_AD_SETUP_ADVANCED_OPTIONS"> 
 			<Text>
-				[COLOR_POSITIVE_TEXT]LEKMOD v34.15[ENDCOLOR]  
+				[COLOR_POSITIVE_TEXT]LEKMOD v35[ENDCOLOR]  
 			</Text>
 		</Replace>
 		<Replace Tag="TXT_KEY_GAME_SELECTION_SCREEN"> 
 			<Text>
-				[COLOR_POSITIVE_TEXT]LEKMOD v34.15[ENDCOLOR] 
+				[COLOR_POSITIVE_TEXT]LEKMOD v35[ENDCOLOR] 
 			</Text>
 		</Replace>
-		<Row Tag="TXT_KEY_GAME_OPTION_SCUFFED_VERSION_CHECKER">
-			<Text>[COLOR_POSITIVE_TEXT]LEKMOD v34.15[ENDCOLOR]</Text>
-		</Row>
 		<!-- END VERSION -->
+		<!-- Start v35 -->
 
+		<Row Tag="TXT_KEY_FEATURE_SHALLOWS">
+			<Text>Shallows</Text>
+		</Row>
+		<Row Tag="TXT_KEY_FEATURE_SHALLOWS_HELP">
+			<Text>Shallow water that land units can walk across without embarking. Costs 2 [ICON_MOVES] Movement to enter. Land and naval combat units stacked here suffer a combat penalty.</Text>
+		</Row>
+		<Row Tag="TXT_KEY_FEATURE_SHALLOWS_TEXT">
+			<Text>Shallows are natural fords and shoals where the water is shallow enough for armies to cross on foot.</Text>
+		</Row>
+		<Row Tag="TXT_KEY_BUILD_REMOVE_WATER_CROSSING">
+			<Text>Remove Water Crossing</Text>
+		</Row>
+		<Row Tag="TXT_KEY_BUILD_REMOVE_WATER_CROSSING_HELP">
+			<Text>Removes a pontoon bridge or water polder from this tile.</Text>
+		</Row>
+		<Row Tag="TXT_KEY_ATTACKMOD_DOMAIN">
+			<Text>Attack VS {1_DomainTypeName}</Text>
+		</Row>
+		<Row Tag="TXT_KEY_DEFENSEMOD_DOMAIN">
+			<Text>Defense VS {1_DomainTypeName}</Text>
+		</Row>
+		<Row Tag="TXT_KEY_LEKMOD_MENU_DISCORD">
+  			<Text>DISCORD</Text>
+		</Row>
+		<Row Tag="TXT_KEY_LEKMOD_MENU_DISCORD_TT">
+  			<Text>Join the Lekmod Discord</Text>
+		</Row>
+		<Row Tag="TXT_KEY_LEKMOD_MENU_GITHUB">
+  			<Text>GITHUB</Text>
+		</Row>
+		<Row Tag="TXT_KEY_LEKMOD_MENU_VERSION_UNREACHABLE">
+			<Text>Running Lekmod {1_Version} - [COLOR_WARNING_TEXT]Cannot reach update server[ENDCOLOR]</Text>
+		</Row>
+		<Row Tag="TXT_KEY_LEKMOD_MENU_VERSION_TT_UNREACHABLE">
+			<Text>Could not reach the online version list. Check your internet connection.</Text>
+		</Row>
+		<Row Tag="TXT_KEY_LEKMOD_MENU_VERSION_TT_UPTODATE">
+			<Text>Your Lekmod install matches the latest installer version.</Text>
+		</Row>
+		<Row Tag="TXT_KEY_LEKMOD_MENU_VERSION_TT_OUTDATED">
+			<Text>A newer Lekmod build is available. Click to download.</Text>
+		</Row>
+		<Row Tag="TXT_KEY_LEKMOD_MENU_GITHUB_TT">
+  			<Text>Open the Lekmod GitHub repository</Text>
+		</Row>
+		<Row Tag="TXT_KEY_LEKMOD_MENU_VERSION_CHECKING">
+  			<Text>Running Lekmod {1_Version} - [COLOR_YELLOW]Checking for updates...[ENDCOLOR]</Text>
+		</Row>
+		<Row Tag="TXT_KEY_LEKMOD_MENU_VERSION_UPTODATE">
+  			<Text>Running Lekmod {1_Version} - [COLOR_POSITIVE_TEXT]Up to date![ENDCOLOR]</Text>
+		</Row>
+		<Row Tag="TXT_KEY_LEKMOD_MENU_VERSION_OUTDATED">
+  			<Text>Running Lekmod {1_Version} - [COLOR_WARNING_TEXT] Newer version detected ({2_Latest})[ENDCOLOR] [COLOR_CYAN](CLICK TO DOWNLOAD)[ENDCOLOR]</Text>
+		</Row>
+		<Row Tag="TXT_KEY_LEKMOD_MENU_VERSION_UNKNOWN">
+  			<Text>Running Lekmod {1_Version}</Text>
+		</Row>
+		<Row Tag="TXT_KEY_LEKMOD_MP_VERSION_MISMATCH_KICK">
+  			<Text>{1_Name} was removed: Lekmod version mismatch (expected {2_Version}).</Text>
+		</Row>
+		<Row Tag="TXT_KEY_LEKMOD_MP_VERSION_MISSING_KICK">
+  			<Text>{1_Name} was removed: missing/outdated Lekmod UI.</Text>
+		</Row>
+
+		<Row Tag="TXT_KEY_MINOR_CIV_PERSONALITY_WEALTHY">
+			<Text>Wealthy</Text>
+		</Row>
+		<Row Tag="TXT_KEY_MINOR_CIV_PERSONALITY_WEALTHY_HELP">
+			<Text>[COLOR_POSITIVE_TEXT]Wealthy[ENDCOLOR] City-States are prosperous and generous to new friends, but less swayed by gold gifts. Trade routes to them yield more gold, and it is easier to demand tribute from.</Text>
+		</Row>
+		<Row Tag="TXT_KEY_MINOR_CIV_PERSONALITY_IMPOVERISHED">
+			<Text>Impoverished</Text>
+		</Row>
+		<Row Tag="TXT_KEY_MINOR_CIV_PERSONALITY_IMPOVERISHED_HELP">
+			<Text>[COLOR_POSITIVE_TEXT]Impoverished[ENDCOLOR] City-States struggle financially. They give less gold on first contact, but respond more strongly to gold gifts and may ask for gold even when they have not been bullied.</Text>
+		</Row>
+		<Row Tag="TXT_KEY_MINOR_CIV_PERSONALITY_PIRATE_REPUBLIC">
+			<Text>Pirate Republic</Text>
+		</Row>
+		<Row Tag="TXT_KEY_MINOR_CIV_PERSONALITY_PIRATE_REPUBLIC_HELP">
+			<Text>[COLOR_POSITIVE_TEXT]Pirate Republic[ENDCOLOR] City-States are coastal militaristic enclaves ruled by privateers. They favor aggressive quests and may gift naval units to allies with ocean access.</Text>
+		</Row>
+		<Row Tag="TXT_KEY_MINOR_CIV_PERSONALITY_THEOCRATIC">
+			<Text>Theocratic</Text>
+		</Row>
+		<Row Tag="TXT_KEY_MINOR_CIV_PERSONALITY_THEOCRATIC_HELP">
+			<Text>[COLOR_POSITIVE_TEXT]Theocratic[ENDCOLOR] City-States let religion dominate their diplomacy. Shared faith strengthens influence ties; different faiths weaken them. The first player to spread a religion here receives a burst of influence.</Text>
+		</Row>
+		<Row Tag="TXT_KEY_MINOR_CIV_PERSONALITY_PACIFISTIC">
+			<Text>Pacifistic</Text>
+		</Row>
+		<Row Tag="TXT_KEY_MINOR_CIV_PERSONALITY_PACIFISTIC_HELP">
+			<Text>[COLOR_POSITIVE_TEXT]Pacifistic[ENDCOLOR] City-States avoid war and military buildup. They never join allies in war, but refuse gifts from civilizations at war with their ally. They pay more when bullied for gold.</Text>
+		</Row>
+		<Row Tag="TXT_KEY_MINOR_CIV_PERSONALITY_ISOLATIONIST">
+			<Text>Isolationist</Text>
+		</Row>
+		<Row Tag="TXT_KEY_MINOR_CIV_PERSONALITY_ISOLATIONIST_HELP">
+			<Text>[COLOR_POSITIVE_TEXT]Isolationist[ENDCOLOR] City-States keep to themselves. They offer no quests and accept no gifts. Declaring war on an Isolationist City-State does not anger other City-States or forfeit Friendly City-State bonuses. Once any civilization reaches the Modern Era, they adopt a new random personality.</Text>
+		</Row>
+		<!-- Updated Friendly tooltip (design doc changes) -->
+		<Replace Tag="TXT_KEY_CITY_STATE_PERSONALITY_FRIENDLY_TT">
+			<Text>Influence with a befriended [COLOR_POSITIVE_TEXT]Friendly[ENDCOLOR] City-State decays more slowly, and completing quests grants +25% more influence. These bonuses are lost if you have ever declared war on a City-State (except Isolationist City-States).</Text>
+		</Replace>
+		<Row Tag="TXT_KEY_MINOR_CIV_PERSONALITY_BLOCK_GIFTS_TT">
+			<Text>This {1_CityStatePersonality} [COLOR_NEGATIVE_TEXT]City-State does not accept gifts from foreign powers.[ENDCOLOR]</Text>
+		</Row>
+		<Row Tag="TXT_KEY_MINOR_CIV_PERSONALITY_BLOCK_PLEDGE_TT">
+			<Text>This {1_CityStatePersonality} [COLOR_NEGATIVE_TEXT]City-State refuses pledges of protection.[ENDCOLOR]</Text>
+		</Row>
+		<Row Tag="TXT_KEY_MINOR_CIV_PERSONALITY_BLOCK_TRIBUTE_TT">
+			<Text>This {1_CityStatePersonality} [COLOR_NEGATIVE_TEXT]City-State cannot be intimidated into paying tribute.[ENDCOLOR]</Text>
+		</Row>
+		<Row Tag="TXT_KEY_MINOR_CIV_PERSONALITY_NO_WAR_PENALTY_TT">
+			<Text>Declaring war on this {1_CityStatePersonality} City-State will not anger other City-States or forfeit Friendly City-State bonuses.</Text>
+		</Row>
+		<Row Tag="TXT_KEY_MINOR_CIV_PERSONALITY_ALLIED_WAR_BLOCK_GIFTS_TT">
+			<Text>This {1_CityStatePersonality} [COLOR_NEGATIVE_TEXT]City-State refuses gifts from civilizations at war with their ally, {2_AllyName}.[ENDCOLOR]</Text>
+		</Row>
+		<!-- Diplomatic greetings for new personalities -->
+		<Row Tag="TXT_KEY_CITY_STATE_DIPLO_HELLO_PEACE_WEALTHY">
+			<Text>Welcome, friend. Our coffers are full — perhaps we can do business together?</Text>
+		</Row>
+		<Row Tag="TXT_KEY_CITY_STATE_DIPLO_HELLO_PEACE_IMPOVERISHED">
+			<Text>We haven't much to spare, but we are glad to see a friendly face.</Text>
+		</Row>
+		<Row Tag="TXT_KEY_CITY_STATE_DIPLO_HELLO_PEACE_PIRATE_REPUBLIC">
+			<Text>Arr! State your business before we decide whether ye walk the plank.</Text>
+		</Row>
+		<Row Tag="TXT_KEY_CITY_STATE_DIPLO_HELLO_PEACE_THEOCRATIC">
+			<Text>The faithful welcome you. May the divine guide our dealings.</Text>
+		</Row>
+		<Row Tag="TXT_KEY_CITY_STATE_DIPLO_HELLO_PEACE_PACIFISTIC">
+			<Text>We prefer peace, but we are glad you come in friendship rather than war.</Text>
+		</Row>
+		<Row Tag="TXT_KEY_CITY_STATE_DIPLO_HELLO_PEACE_ISOLATIONIST">
+			<Text>We do not seek outsiders, but you may state your purpose.</Text>
+		</Row>
+		<!-- Combat Predictor Improvements -->
+		<!-- City Combat Panel Text Keys -->
+		<Row Tag="TXT_KEY_COMBATMOD_CITY_BASE_STRENGTH">
+			<Text>
+				Base Strength
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_COMBATMOD_CITY_POPULATION">
+			<Text>
+				Population ({1_Population})
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_COMBATMOD_CITY_BUILDINGS">
+			<Text>
+				Buildings
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_COMBATMOD_CITY_GARRISON">
+			<Text>
+				{1_GarrisonUnitName}
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_COMBATMOD_CITY_TECHNOLOGY">
+			<Text>
+				Technological Progress ({1_NumTechs})
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_COMBATMOD_CITY_PLAYER_MODIFIER">
+			<Text>
+				Empire Strength Modifier
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_COMBATMOD_CITY_RANGE_STRIKE">
+			<Text>
+				Range Strike Penalty
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_COMBATMOD_CITY_GARRISON_RANGE_STRIKE">
+			<Text>
+				Garrison Ranged Strike Bonus
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_COMBATMOD_CITY_RELIGION_RANGE_STRIKE">
+			<Text>
+				Religion Ranged Strike Bonus
+			</Text>
+		</Row>
+		<!-- Attacker TextKeys look like  text : Modifier  -->
+		<Row Tag="TXT_KEY_COMBATPANEL_FREEDOM">
+			<Text>
+				[ICON_IDEOLOGY_FREEDOM] Freedom
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_COMBATPANEL_ORDER">
+			<Text>
+				[ICON_IDEOLOGY_ORDER] Order
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_COMBATPANEL_AUTOCRACY">
+			<Text>
+				[ICON_IDEOLOGY_AUTOCRACY] Autocracy
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_COMBATMOD_MISCELLANEOUS">
+			<Text>
+				Miscellaneous ({1_NumMiscBonuses})
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_COMBATMOD_GENERIC">
+			<Text>
+				[ICON_STRENGTH] Strength Modifier
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_COMBATMOD_UNHAPPY">
+			<Text>
+				[ICON_HAPPINESS_4] Unhappiness Penalty ({1_Unhappiness})
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_COMBATMOD_STRATEGIC_RESOURCE_PENALTY">
+			<Text>
+				Strategic Resource Deficit
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_COMBATMOD_NEAR_GREAT_GENERAL">
+			<Text>
+				Nearby [ICON_GREAT_GENERAL] Great General
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_COMBATMOD_NEAR_GREAT_ADMIRAL">
+			<Text>
+				Nearby [ICON_GREAT_ADMIRAL] Great Admiral
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_COMBATMOD_NEAR_REVERSE_GREAT_GENERAL">
+			<Text>
+				Nearby Reverse [ICON_GREAT_GENERAL] Great General
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_COMBATMOD_NEAR_IMPROVEMENT">
+			<Text>
+				Nearby {1_ImprovementName}
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_COMBATMOD_ADJACENT_FRIENDLY_UNIT">
+			<Text>
+				Adjacent Friendly Unit
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_COMBATMOD_GOLDEN_AGE">
+			<Text>
+				[ICON_GOLDEN_AGE] Golden Age
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_COMBATMOD_NEAR_WATER">
+			<Text>
+				Nearby {1_Terrain}
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_COMBATMOD_FRIENDLY_LANDS">
+			<Text>
+				Friendly Lands
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_COMBATMOD_OUTSIDE_FRIENDLY_LANDS">
+			<Text>
+				Foreign Lands
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_COMBATMOD_CAPITAL_DEFENSE">
+			<Text>
+				[ICON_CAPITAL] Capital Proximity ({1_CapitalDistance})
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_COMBATMOD_NEAR_FRIENDLY_MINOR">
+			<Text>
+				Nearby Friendly [ICON_CITY_STATE] City-State ({1_CityStateName})
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_COMBATMOD_FLANKING">
+			<Text>
+				Flanking Bonus ({1_NumFlankers})
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_COMBATMOD_UNIT_CLASS">
+			<Text>
+				Bonus VS {1_UnitClassName}
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_COMBATMOD_UNIT_COMBAT_TYPE">
+			<Text>
+				Bonus VS {1_UnitCombatTypeName}
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_COMBATMOD_DOMAIN">
+			<Text>
+				Bonus VS {1_DomainTypeName}
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_COMBATMOD_VS_LARGER_CIV">
+			<Text>
+				Bonus VS Larger Civs ({1_LargerCivName})
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_COMBATMOD_VS_SMALLER_CIV">
+			<Text>
+				Bonus VS Smaller Civs ({1_SmallerCivName})
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_COMBATMOD_VS_DIFFERENT_IDEOLOGY">
+			<Text>
+				Bonus VS {1_IdeologyName}
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_COMBATMOD_TOURISM_INFLUENCE">
+			<Text>
+				[ICON_TOURISM] Tourism Influence
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_COMBATMOD_CITY_STATE">
+			<Text>
+				Bonus VS {1_CityStateName}
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_COMBATMOD_VS_BARBARIANS">
+			<Text>
+				Bonus VS Barbarians
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_COMBATMOD_VS_HIGHER_TECH">
+			<Text>
+				Bonus VS Higher Tech Units
+			</Text>
+		</Row>
+		<!-- Attack Modifiers -->
+		<Row Tag="TXT_KEY_ATTACKMOD_ATTACK_MODIFIER">
+			<Text>
+				Attack Modifier
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_ATTACKMOD_KAMIKAZE">
+			<Text>
+				Kamikaze Bonus
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_ATTACKMOD_CLAUZWITZ">
+			<Text>
+				Temporary Attack Bonus ({1_TurnsLeft})
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_ATTACKMOD_HEAVY_CHARGE_DOWNHILL">
+			<Text>
+				Attacking From Higher Elevation
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_ATTACKMOD_GOLDEN_AGE_FOREIGN">
+			<Text>
+				[ICON_GOLDEN_AGE] Golden Age Bonus
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_ATTACKMOD_CITY">
+			<Text>
+				City Attack Bonus
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_ATTACKMOD_SAPPER">
+			<Text>
+				Nearby Sapper
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_ATTACKMOD_NEAR_GREAT_GENERAL_SIEGE">
+			<Text>
+				Nearby [ICON_GREAT_GENERAL] Great General VS City
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_ATTACKMOD_BARBARIAN_PENALTY_VS_CITY">
+			<Text>
+				Barbarian Penalty VS Cities
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_ATTACKMOD_HILLS">
+			<Text>
+				Hill Attack
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_ATTACKMOD_OPEN">
+			<Text>
+				Open Ground Attack
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_ATTACKMOD_ROUGH">
+			<Text>
+				Rough Ground Attack
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_ATTACKMOD_FEATURE">
+			<Text>
+				{1_FeatureName} Attack
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_ATTACKMOD_TERRAIN">
+			<Text>
+				{1_TerrainName} Attack
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_ATTACKMOD_FRIENDLY_LANDS">
+			<Text>
+				Friendly Lands Attack
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_ATTACKMOD_RIVER_ATTACK_PENALTY">
+			<Text>
+				River Crossing
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_ATTACKMOD_AMPHIB_ATTACK_PENALTY">
+			<Text>
+				Amphibious Attack
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_ATTACKMOD_UNIT_CLASS">
+			<Text>
+				Attack VS {1_UnitClassName}
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_ATTACKMOD_FORTIFIED">
+			<Text>
+				Fortified Attack
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_ATTACKMOD_WOUNDED">
+			<Text>
+				Wounded Attack
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_ATTACKMOD_HEAVY_CHARGE">
+			<Text>
+				Heavy Charge
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_ATTACKMOD_AIR_SWEEP">
+			<Text>
+				Bonus Performing Air Sweep
+			</Text>
+		</Row>
+		<!-- Defense Modifiers -->
+		<Row Tag="TXT_KEY_DEFENSEMOD_GENERIC">
+			<Text>
+				Defense Modifier
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_DEFENSEMOD_RANGED">
+			<Text>
+				Ranged Defense
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_DEFENSEMOD_TERRAIN">
+			<Text>
+				Terrain Defense
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_DEFENSEMOD_FORTIFICATION">
+			<Text>
+				[ICON_MISSION_FORTIFY] Fortification Defense
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_DEFENSEMOD_HILLS">
+			<Text>
+				Hill Defense
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_DEFENSEMOD_OPEN_GROUND">
+			<Text>
+				Open Ground Defense
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_DEFENSEMOD_ROUGH_GROUND">
+			<Text>
+				Rough Ground Defense
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_DEFENSEMOD_FEATURE">
+			<Text>
+				{1_FeatureName} Defense
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_DEFENSEMOD_TERRAIN_EXTRA">
+			<Text>
+				{1_TerrainName} Defense
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_DEFENSEMOD_UNIT_CLASS">
+			<Text>
+				Defense VS {1_UnitClassName}
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_DEFENSEMOD_CITY">
+			<Text>
+				City Defense
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_DEFENSEMOD_EMBARKED">
+			<Text>
+				[ICON_MISSION_EMBARK] Embarked Defense
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_DEFENSEMOD_INTERCEPTION">
+			<Text>
+				Interception Bonus
+			</Text>
+		</Row>
+		
+
+		<Row Tag="TXT_KEY_YIELD_TOURISM">
+			<Text>
+				Tourism
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_TOURISM_HELP_INFO">
+			<Text>
+				While [ICON_TOURISM] Tourism has no local impacts, it works towards empowering your Civilization's [ICON_INTERNATIONAL_TRADE] Trade and [ICON_SPY] Spies and hindering your Enemies. Once you have eclipsed all other civilization's culture with your [ICON_TOURISM] Tourism, you win a [ICON_VICTORY_CULTURE] [COLOR_GREEN]Culture Victory[ENDCOLOR]!
+			</Text>
+		</Row>
+		<!-- New Civs -->
+		<!-- Mali Trait -->
+		<Row Tag="TXT_KEY_TRAIT_MALI_DESC">
+			<Text>
+				+3 [ICON_GOLD] Gold and +3 [ICON_HAPPINESS_1] Global Happiness from the [ICON_BUILDING_PALACE] [COLOR_YELLOW]Palace[ENDCOLOR]. +1 [ICON_PEACE] Faith to tiles with at least 1 [ICON_GOLD] Gold while in a [ICON_GOLDEN_AGE] Golden Age.
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_TRAIT_MALI_SHORT_DESC">
+			<Text>
+				Golden Hajj
+			</Text>
+		</Row>
+		<!-- Mali Civ -->
+		<Row Tag="TXT_KEY_CIV_MALI_DESC">
+			<Text>
+				Malian Empire
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_CIV_MALI_SHORT_DESC">
+			<Text>
+				Mali
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_CIV_MALI_ADJECTIVE">
+			<Text>
+				Malian
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_DAWN_OF_MAN_MALI_TEXT">
+			<Text>
+				O great Mansa Musa, Lion of Mali and lord of the golden lands, your people look to you beneath the burning sun of the Sahel. From the banks of the Niger to the sands of the Sahara, merchants speak your name with awe, for the caravans of gold, salt, ivory, and learning flow through your empire like lifeblood through the veins of the world.[NEWLINE][NEWLINE]You inherit a realm already rich in earth and trade, yet it is by wisdom, faith, and command that riches become greatness. Let the cities of Mali rise as beacons to scholars, merchants, and pilgrims. Let Timbuktu’s libraries fill with knowledge, and let your generosity carry the fame of Mali beyond desert, sea, and empire. [NEWLINE][NEWLINE]O Mansa, will you gather the wealth of the world beneath your banner? Will your gold build monuments, feed wisdom, and humble distant kings? Can you forge an empire whose splendor will be remembered long after the caravans have vanished into the sand? Can you build a civilization that will stand the test of time?
+			</Text>
+		</Row>
+		<!-- MALI Cities -->
+		<Row Tag="TXT_KEY_CITY_NAME_MALI_CAPITAL">
+			<Text>
+				Niani
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_CITY_NAME_MALI_1">
+			<Text>
+				Timbuktu
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_CITY_NAME_MALI_2">
+			<Text>
+				Jenne
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_CITY_NAME_MALI_3">
+			<Text>
+				Kumbi Saleh
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_CITY_NAME_MALI_4">
+			<Text>
+				Walata
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_CITY_NAME_MALI_5">
+			<Text>
+				Tawdenni
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_CITY_NAME_MALI_6">
+			<Text>
+				Tadmekka
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_CITY_NAME_MALI_7">
+			<Text>
+				Awdaghust
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_CITY_NAME_MALI_8">
+			<Text>
+				Kirina
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_CITY_NAME_MALI_9">
+			<Text>
+				Segu
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_CITY_NAME_MALI_10">
+			<Text>
+				Nioro
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_CITY_NAME_MALI_11">
+			<Text>
+				Kangaba
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_CITY_NAME_MALI_12">
+			<Text>
+				Kouroussa
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_CITY_NAME_MALI_13">
+			<Text>
+				Niagassola
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_CITY_NAME_MALI_14">
+			<Text>
+				Diara
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_CITY_NAME_MALI_15">
+			<Text>
+				Kayes
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_CITY_NAME_MALI_16">
+			<Text>
+				N'teret
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_CITY_NAME_MALI_17">
+			<Text>
+				Dia
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_CITY_NAME_MALI_18">
+			<Text>
+				Arawan
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_CITY_NAME_MALI_19">
+			<Text>
+				Kiri
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_CITY_NAME_MALI_20">
+			<Text>
+				Mopti
+			</Text>
+		</Row>
+		<!-- Mansa Musa -->
+		<Row Tag="TXT_KEY_LEADER_MALI">
+			<Text>
+				Mansa Musa
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_LEADER_MALI_PEDIA">
+			<Text>
+				[COLOR_XP_BLUE]https://en.wikipedia.org/wiki/Mansa_Musa[ENDCOLOR][NEWLINE][NEWLINE]Mansa Musa[b] (c.1280 - c.1337) was the ninth Mansa of the Mali Empire, which reached its territorial peak during his reign. Musa's reign is often regarded as the zenith of Mali's power and prestige, although he features less in Mandinka oral traditions than his predecessors. Musa went on Hajj to Mecca in 1324, traveling with an enormous entourage and a vast supply of gold. En route he spent time in Cairo, where his lavish gift-giving is said to have noticeably affected the value of gold in Egypt and garnered the attention of the wider Muslim world. Musa expanded the borders of the Mali Empire, in particular incorporating the cities of Gao and Timbuktu into its territory. He sought closer ties with the rest of the Muslim world, particularly the Mamluk and Marinid Sultanates. He recruited scholars from the wider Muslim world to travel to Mali, such as the Andalusian poet Abu Ishaq al-Sahili, and helped establish Timbuktu as a center of Islamic learning. His reign is associated with numerous construction projects, including a portion of Djinguereber Mosque in Timbuktu.
+			</Text>
+		</Row>
+		<!-- Mali National Treasury -->
+		<Row Tag="TXT_KEY_BUILDING_MALI_NATIONAL_TREASURY_DESC">
+			<Text>
+				Grand Treasury of Mali[COLOR_CULTURE_STORED]*[ENDCOLOR]
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_BUILDING_MALI_NATIONAL_TREASURY_PEDIA">
+			<Text>
+				[COLOR_XP_BLUE]https://www.worldhistory.org/Mali_Empire/[ENDCOLOR][NEWLINE][NEWLINE]The Grand Treasury of Mali represents the imperial wealth of the mansa: gold from Bambuk, Bure, and Galam; salt from Saharan trade; tribute from subject peoples; and taxes from caravans crossing Mali's domains. Though not a single documented building, it reflects the financial power that made Mali one of the richest states of the medieval world and made Mansa Musa's pilgrimage famous from West Africa to Cairo.
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_BUILDING_MALI_NATIONAL_TREASURY_STRATEGY">
+			<Text>
+				The Grand Treasury can be a potent force multiplier with a high [ICON_GOLD] Gold or [ICON_PEACE] Faith income by discounting the first purchase in the city it's made in.
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_BUILDING_MALI_NATIONAL_TREASURY_HELP">
+			<Text>
+				[COLOR_CULTURE_STORED]Unique National Wonder (only [COLOR_GREEN]Mali[ENDCOLOR] may build one)[ENDCOLOR][NEWLINE][NEWLINE]In addition to the effects of the [ICON_WONDER_NATIONAL_TREASURY] [COLOR_YELLOW]East India Company[ENDCOLOR] that it replaces, the Grand Treasury of Mali provides +5 [ICON_PEACE] Faith and a [COLOR_GREEN]25%[ENDCOLOR] discount to the first Unit or Building purchased in the city each Turn with [ICON_GOLD] Gold or [ICON_PEACE] Faith. Requires a [ICON_BUILDING_MARKET] [COLOR_YELLOW]Market[ENDCOLOR] to be constructed, but does not require a [ICON_BUILDING_MARKET] [COLOR_YELLOW]Market[ENDCOLOR] in all cities. 
+			</Text>
+		</Row>
+		<!-- Mali Composite Bowman -->
+		<Row Tag="TXT_KEY_UNIT_MALI_COMPOSITE_BOWMAN">
+			<Text>
+				Skirmisher
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_UNIT_HELP_MALI_COMPOSITE_BOWMAN">
+			<Text>
+				Has +1 [ICON_STRENGTH] Melee Strength compared to the [ICON_UNIT_COMPOSITE_BOWMAN] [COLOR_YELLOW]Composite Bowman[ENDCOLOR] that it replaces. Arrives with [COLOR_GREEN]Skirmisher Tactics[ENDCOLOR] Promotion.
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_PROMOTION_MALI_SKIRMISHER_TACTICS">
+			<Text>
+				Skirmisher Tactics
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_PROMOTION_MALI_SKIRMISHER_TACTICS_HELP">
+			<Text>
+				If this Unit makes an attack, at the start of the next turn it gains +1 [ICON_MOVES] movement. If this Unit kills an enemy unit, it immediately gains +1 [ICON_MOVES] movement and regains all [ICON_MOVES] movement. Kept on Upgrade.
+			</Text>
+		</Row>
+		<!-- Buganda -->
+		<Row Tag="TXT_KEY_TRAIT_BUGANDA_DESC">
+			<Text>
+				[ICON_MISSION_EMBARK] Embarked Military units fight as if they are on land and may perform most actions as if they are not embarked. Units heal an additional [ICON_MISSION_HEAL] [COLOR_GREEN]+10[ENDCOLOR] HP and gain +100% more [ICON_GOLD] Gold when [ICON_MISSION_PILLAGE] Pillaging.
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_TRAIT_BUGANDA_SHORT_DESC">
+			<Text>
+				War Canoes
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_PROMOTION_BUGANDA_WAR_CANOES">
+			<Text>
+				War Canoes
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_PROMOTION_BUGANDA_WAR_CANOES_HELP">
+			<Text>
+				100% [ICON_GOLD] Gold and [COLOR_GREEN]+10[ENDCOLOR] additional HP when [ICON_MISSION_PILLAGE] Pillaging.
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_PROMOTION_BUGANDA_WATER_PILLAGE">
+			<Text>
+				River Raids
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_PROMOTION_BUGANDA_WATER_PILLAGE_HELP">
+			<Text>
+				+25% [ICON_STRENGTH] Strength when nearby Water or Rivers. Gains [COLOR_XP_BLUE]+5 XP[ENDCOLOR] when [ICON_MISSION_PILLAGE] Pillaging.
+			</Text>
+		</Row>
+		<!-- Buganda Civ -->
+		<!-- Buganda Cities -->
+		<Row Tag="TXT_KEY_CITY_NAME_BUGANDA_CAPITAL">
+			<Text>
+				Kampala
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_CITY_NAME_BUGANDA_1">
+			<Text>
+				Kasangati
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_CITY_NAME_BUGANDA_2">
+			<Text>
+				Mukono
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_CITY_NAME_BUGANDA_3">
+			<Text>
+				Ssentema
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_CITY_NAME_BUGANDA_4">
+			<Text>
+				Butoolo
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_CITY_NAME_BUGANDA_5">
+			<Text>
+				Mitiyana
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_CITY_NAME_BUGANDA_6">
+			<Text>
+				Buzinde
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_CITY_NAME_BUGANDA_7">
+			<Text>
+				Nakasongola
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_CITY_NAME_BUGANDA_8">
+			<Text>
+				Kaabasanda
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_CITY_NAME_BUGANDA_9">
+			<Text>
+				Masaka
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_CITY_NAME_BUGANDA_10">
+			<Text>
+				Sembalue
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_CITY_NAME_BUGANDA_11">
+			<Text>
+				Lakaayi
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_CITY_NAME_BUGANDA_12">
+			<Text>
+				Kabula
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_CITY_NAME_BUGANDA_13">
+			<Text>
+				Mwera
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_CITY_NAME_BUGANDA_14">
+			<Text>
+				Ntenjeru
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_CITY_NAME_BUGANDA_15">
+			<Text>
+				Mpenja
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_CITY_NAME_BUGANDA_16">
+			<Text>
+				Kanoni
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_CITY_NAME_BUGANDA_17">
+			<Text>
+				Kaweeri
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_CITY_NAME_BUGANDA_18">
+			<Text>
+				Kalangala
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_CITY_NAME_BUGANDA_19">
+			<Text>
+				Maggyo
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_CITY_NAME_BUGANDA_20">
+			<Text>
+				Kibbale
+			</Text>
+		</Row>
+		<!-- Kabaka Muteesa I -->
+		<Row Tag="TXT_KEY_CIV_BUGANDA_DESC">
+			<Text>
+				Buganda Empire
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_CIV_BUGANDA_SHORT_DESC">
+			<Text>
+				Buganda
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_CIV_BUGANDA_ADJECTIVE">
+			<Text>
+				Buganda
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_DAWN_OF_MAN_BUGANDA_TEXT">
+			<Text>
+				Hail Kabaka Muteesa I, guardian of Buganda and lord of the hills above Nnalubaale, your people gather beneath the royal drums. From the shores of the great lake to the roads of the interior, your kingdom stands strong yet beyond your borders, the world presses closer. Traders from the coast bring cloth, guns, and foreign prayers. Missionaries speak of distant kings and new gods. Some arrive with gifts, some with promises, and some with ambitions hidden beneath polite words.[NEWLINE][NEWLINE]Wise Muteesa, you must weigh each stranger as carefully as a spear in the hand. Let no faith, merchant, or empire master Buganda while you still command the court. Take what strengthens your kingdom, reject what would divide it, and make the palace at Mengo a place where foreign powers compete for your favor.[NEWLINE][NEWLINE]O Kabaka, will you guide Buganda through the age of traders, missionaries, and empires? Can you build a civilization that will stand the test of time?
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_LEADER_BUGANDA">
+			<Text>
+				Kabaka Muteesa I
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_LEADER_BUGANDA_PEDIA">
+			<Text>
+				[COLOR_XP_BLUE]https://en.wikipedia.org/wiki/Muteesa_I_of_Buganda [ENDCOLOR][NEWLINE][NEWLINE]Muteesa I Mukaabya Walugembe Kayiira (c. 1837-9 October 1884) was the 30th Kabaka of the Kingdom of Buganda, from 1856 until 1884. In Ugandan historiography, Muteesa left a mixed legacy, with some regarding him as the most important of the kings of Buganda because of his vision and diplomatic skills, while others are more critical and believe he welcomed foreign influence that ultimately undermined Buganda's sovereignty.
+			</Text>
+		</Row>
+		<!-- Buganda Unit -->
+		<Row Tag="TXT_KEY_UNIT_BUGANDA_EXPEDITIONARY_FORCE_DESC">
+			<Text>
+				Abambowa
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_UNIT_BUGANDA_EXPEDITIONARY_FORCE_HELP">
+			<Text>
+				While weaker than the Expeditionary Force that it replaces, it arrives at [ICON_TECH_MILITARY_SCIENCE] [COLOR_CYAN]Military Science[ENDCOLOR] instead of [ICON_TECH_BIOLOGY] [COLOR_CYAN]Biology[ENDCOLOR] and recieves a [COLOR_GREEN]+25%[ENDCOLOR] combat bonus when on or adjacent to Coast, Ocean, Lake or River tile. Additionally, gains [COLOR_XP_BLUE]+5[ENDCOLOR] XP upon [ICON_MISSION_PILLAGE] pillaging an Improvement.
+			</Text>
+		</Row>
+		<!-- Buganda Improvement -->
+		<Row Tag="TXT_KEY_BUGANDA_LAKE">
+			<Text>
+				Kabaka's Lake
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_CIV5_BUGANDA_LAKE_TEXT">
+			<Text>
+				Available at [ICON_TECH_CIVIL_SERVICE] [COLOR_CYAN]Civil Service[ENDCOLOR]. Must be constructed next to a [COLOR_GREEN]City[ENDCOLOR] and on [COLOR_GREEN]flat land[ENDCOLOR]. [COLOR_YELLOW]Kabaka's Lake[ENDCOLOR] may not be removed or pillaged, [COLOR_RED]May not be adjacent to another[ENDCOLOR] [COLOR_YELLOW]Kabaka's Lake[ENDCOLOR] and will [COLOR_GREEN]remove[ENDCOLOR] the resource it is on. Receives all bonuses a regular [COLOR_GREEN]lake[ENDCOLOR] would, and the tile and adjacent tiles become fresh water tiles (if not already). It is still a land tile. +2 [ICON_FOOD] Food and +1 [ICON_GOLD] Gold. Receives +2 [ICON_CULTURE] Culture and [ICON_TOURISM] Tourism at [ICON_TECH_FLIGHT] [COLOR_CYAN]Flight[ENDCOLOR]. [NEWLINE][NEWLINE]If  [COLOR_YELLOW]Kabaka's Lake[ENDCOLOR] removes a resource that you cannot see at the time of constructing the lake, the resource will instead be moved to another valid plot within the nearest city's range.
+			</Text>
+		</Row>
+		<Replace Tag="TXT_KEY_BUILD_BUGANDA_LAKE"> 
+			<Text>
+				Construct [LINK=IMPROVEMENT_BUGANDA_LAKE]Kabaka's Lake[\LINK]
+			</Text>
+		</Replace>
+		<!-- End New Civs -->
+		<!-- Yield Standardization, Decimal Precision later -->
+		<Row Tag="TXT_KEY_TP_YIELD">
+			<Text>
+				[ICON_BULLET] {1_Yield: number "'+'##;'[COLOR:255:60:60:255]-'##'[ENDCOLOR]'"} Total <!-- insert the icon and string -->
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_TP_YIELD_FROM_CITIES"> 
+			<Text>
+				[ICON_BULLET] {1_Yield: number "'+'##;'[COLOR:255:60:60:255]-'##'[ENDCOLOR]'"} produced by Cities.
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_TP_YIELD_FROM_OTHER_PLAYERS"> 
+			<Text>
+				[ICON_BULLET] {1_Yield: number "'+'##;'[COLOR:255:60:60:255]-'##'[ENDCOLOR]'"} produced by agreements with other Players.
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_TP_YIELD_FROM_HAPPINESS"> 
+			<Text>
+				[ICON_BULLET] {1_Yield: number "'+'##;'[COLOR:255:60:60:255]-'##'[ENDCOLOR]'"} produced by Excess [ICON_HAPPINESS_1] Happiness.
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_TP_YIELD_FROM_TRAITS"> 
+			<Text>
+				[ICON_BULLET] {1_Yield: number "'+'##;'[COLOR:255:60:60:255]-'##'[ENDCOLOR]'"} produced by your Trait.
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_TP_YIELD_FROM_RELIGION"> 
+			<Text>
+				[ICON_BULLET] {1_Yield: number "'+'##;'[COLOR:255:60:60:255]-'##'[ENDCOLOR]'"} produced by your [ICON_RELIGION] Religion.
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_TP_YIELD_FROM_PENALTIES"> 
+			<Text>
+				[ICON_BULLET] {1_Yield: number "'+'##;'[COLOR:255:60:60:255]-'##'[ENDCOLOR]'"} lost from Penalities.
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_TP_YIELD_FROM_MINORS"> 
+			<Text>
+				[ICON_BULLET] {1_Yield: number "'+'##;'[COLOR:255:60:60:255]-'##'[ENDCOLOR]'"} produced by your [ICON_INFLUENCE] Influence over [ICON_CITY_STATE] City-States.
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_TP_YIELD_FROM_BONUS_TURNS"> 
+			<Text>
+				[ICON_BULLET] {1_Yield: number "'+'##;'[COLOR:255:60:60:255]-'##'[ENDCOLOR]'"} produced by The World's Fair!
+			</Text>
+		</Row>
+		<Row Tag="TXT_KEY_TP_YIELD_FROM_GOLDEN_AGE"> 
+			<Text>
+				[ICON_BULLET] {1_Yield: number "'+'##;'[COLOR:255:60:60:255]-'##'[ENDCOLOR]'"} produced by your [ICON_GOLDEN_AGE] Golden Age!
+			</Text>
+		</Row>
+		<!-- End v35 -->
 		<Row Tag="TXT_KEY_DIPLO_ITEM_PLAYER_ALREADY_OWNS_ONE_LINE">
 			<Text>
 				[COLOR_WARNING_TEXT]Both players already own this item![ENDCOLOR]
@@ -610,7 +1569,7 @@
 			<Text>Tunisian replacement for the [ICON_BUILDING_CASTLE]Castle. Generates +4 [ICON_GOLDEN_AGE] Golden Age points per turn. Costs 50% less [ICON_PRODUCTION] Production and does not require [ICON_BUILDING_WALLS] Walls.</Text>
 		</Row>
 		<Row Tag="TXT_KEY_BUILDING_TUNISIA_CASTLE_STRATEGY">			
-			<Text>The Ribat is significantly more accessible than regular Castles since it doesn't require Walls as a prerequisite and costs 50% less [ICON_PRODUCTION] Production. Beyond its defensive capabilities, it generates valuable [ICON_GOLD] Gold and [ICON_FAITH] Faith, while the +4 [ICON_GOLDEN_AGE] Golden Age points per turn help Tunisia trigger Golden Ages more frequently.</Text>
+			<Text>The Ribat is significantly more accessible than regular Castles since it doesn't require Walls as a prerequisite and costs 50% less [ICON_PRODUCTION] Production. Beyond its defensive capabilities, it generates valuable [ICON_GOLD] Gold and [ICON_PEACE] Faith, while the +4 [ICON_GOLDEN_AGE] Golden Age points per turn help Tunisia trigger Golden Ages more frequently.</Text>
 		</Row>
 		
 		<Row Tag="TXT_KEY_PROMOTION_TUNISIA_CITY_ATTACK">			
@@ -1333,7 +2292,7 @@
 			<Text>Movement Penalty Attacking Cities</Text>
 		</Row>
 		<Row Tag="TXT_KEY_PROMOTION_CITY_MOVEMENT_PENALTY_HELP">
-			<Text>Unit spends 2 additional [ICON_MOVEMENT] Moves attacking a City (total 3).</Text>
+			<Text>Unit spends 2 additional [ICON_MOVES] Moves attacking a City (total 3).</Text>
 		</Row>
 		<Row Tag="TXT_KEY_GAME_OPTION_NO_SCIENTIST_SAVING">
 			<Text>No Scientist Saving</Text>
@@ -1390,7 +2349,7 @@
 			<Text>Naval Targeting III</Text>
 		</Row>
 		<Row Tag="TXT_KEY_UNIT_HELP_CAROLEAN">
-			<Text>Unique Swedish Unit. Replaces the Musketman. Comes with the March promotion and one addition [ICON_MOVEMENT] Movement.</Text>
+			<Text>Unique Swedish Unit. Replaces the Musketman. Comes with the March promotion and one addition [ICON_MOVES] Movement.</Text>
 		</Row>
 		<Row Tag="TXT_KEY_PROMOTION_MOVEMENT_TO_LAND">
 			<Text>Overseer</Text>
@@ -1532,7 +2491,7 @@
 		</Replace>
 		<Replace Tag="TXT_KEY_PROMOTION_BOMBARDMENT_NAVAL_1_HELP"> 
 			<Text>
-				+25% [ICON_STRENGTH] Combat Strength against [COLOR_POSITIVE_TEXT]Land Units[ENDCOLOR].
+				+25% [ICON_STRENGTH] Attack Strength against [COLOR_POSITIVE_TEXT]Land Units[ENDCOLOR].
 			</Text>
 		</Replace>
 		<Replace Tag="TXT_KEY_PROMOTION_BOMBARDMENT_NAVAL_2"> 
@@ -1542,7 +2501,7 @@
 		</Replace>
 		<Replace Tag="TXT_KEY_PROMOTION_BOMBARDMENT_NAVAL_2_HELP"> 
 			<Text>
-				+25% [ICON_STRENGTH] Combat Strength against [COLOR_POSITIVE_TEXT]Land Units[ENDCOLOR].
+				+25% [ICON_STRENGTH] Attack Strength against [COLOR_POSITIVE_TEXT]Land Units[ENDCOLOR].
 			</Text>
 		</Replace>
 		<Replace Tag="TXT_KEY_PROMOTION_BOMBARDMENT_NAVAL_3"> 
@@ -1552,7 +2511,7 @@
 		</Replace>
 		<Replace Tag="TXT_KEY_PROMOTION_BOMBARDMENT_NAVAL_3_HELP"> 
 			<Text>
-				+25% [ICON_STRENGTH] Combat Strength against [COLOR_POSITIVE_TEXT]Land Units[ENDCOLOR].
+				+25% [ICON_STRENGTH] Attack Strength against [COLOR_POSITIVE_TEXT]Land Units[ENDCOLOR].
 			</Text>
 		</Replace>
 	
@@ -6227,7 +7186,7 @@ Many individual cacicazgos have been studied in colonial Mexico, showing that en
 			<Text>Defender</Text>
 		</Row>
 		<Row Tag="TXT_KEY_UNIT_HELP_JFD_DEFENDER">
-			<Text>Replaces the Ironclad. May only be trained by New Zealand. 50 Strength (vs. 45). Earns a +15% [ICON_STRENGTH] Combat bonus inside [COLOR_POSITIVE_TEXT] Friendly[ENDCOLOR] territory and ignores [COLOR_POSITIVE_TEXT]Zone of Control[ENDCOLOR] [ICON_MOVEMENT] Movement penalties when within 2 tiles of an owned City or a City from a player whom you have an active [COLOR_POSITIVE_TEXT]Declaration of Friendship[ENDCOLOR] with. In addition to the typical traits, arrives with [COLOR_POSITIVE_TEXT]Cover I[ENDCOLOR] (gain a +33% [ICON_STRENGTH] Combat bonus defending against Ranged attacks).[NEWLINE][NEWLINE]Does not require [ICON_RES_COAL] Coal.
+			<Text>Replaces the Ironclad. May only be trained by New Zealand. 50 Strength (vs. 45). Earns a +15% [ICON_STRENGTH] Combat bonus inside [COLOR_POSITIVE_TEXT] Friendly[ENDCOLOR] territory and ignores [COLOR_POSITIVE_TEXT]Zone of Control[ENDCOLOR] [ICON_MOVES] Movement penalties when within 2 tiles of an owned City or a City from a player whom you have an active [COLOR_POSITIVE_TEXT]Declaration of Friendship[ENDCOLOR] with. In addition to the typical traits, arrives with [COLOR_POSITIVE_TEXT]Cover I[ENDCOLOR] (gain a +33% [ICON_STRENGTH] Combat bonus defending against Ranged attacks).[NEWLINE][NEWLINE]Does not require [ICON_RES_COAL] Coal.
 		</Text>
 		</Row>
 		<Row Tag="TXT_KEY_UNIT_JFD_DEFENDER_STRATEGY">
@@ -6549,10 +7508,6 @@ Many individual cacicazgos have been studied in colonial Mexico, showing that en
 			<Text>+34% [ICON_STRENGTH] Combat Strength VS [COLOR_POSITIVE_TEXT]Naval[ENDCOLOR] units.</Text>
 		</Row>
 	<!-- New options -->
-	<!-- version checker -->
-		<Row Tag="TXT_KEY_GAME_OPTION_SCUFFED_VERSION_CHECKER_HELP">
-			<Text>[COLOR_POSITIVE_TEXT]Version Checker[ENDCOLOR][NEWLINE][NEWLINE]This Game Option allows for a simple way of checking if people in your game lobby are running the same version of Lekmod or not. Simply enable this option once all the desires Players are in, then whomever does not see this Game Option in the Game Option tab after turning it on, is running a different version!</Text>
-		</Row>
 	<!-- v26 -->
 		<Row Tag="TXT_KEY_GAME_OPTION_FAST_HAND">
 			<Text>Fast Hand</Text>
@@ -15679,7 +16634,7 @@ strongest around the Gulf of Bothnia, where land steadily rises about 1 cm a yea
 		</Replace>
 		<Replace Tag="TXT_KEY_BELIEF_EARTH_MOTHER"> 
 			<Text>
-				+1 [ICON_PEACE] Faith from [COLOR_POSITIVE_TEXT]Mines[ENDCOLOR]. +2 [ICON_PEACE] Faith from [ICON_RES_IRON] Iron
+				+1 [ICON_PEACE] Faith from [COLOR_POSITIVE_TEXT]Mines[ENDCOLOR]. +1 [ICON_PEACE] Faith from [ICON_RES_IRON] Iron
 			</Text>
 		</Replace>
 		<Replace Tag="TXT_KEY_BELIEF_EARTH_MOTHER_SHORT"> 
@@ -15799,7 +16754,7 @@ strongest around the Gulf of Bothnia, where land steadily rises about 1 cm a yea
 		</Replace>
 		<Replace Tag="TXT_KEY_BELIEF_GOD_FESTIVALS"> 
 			<Text>
-				+1 [ICON_PRODUCTION] Production and +1 [ICON_PEACE] Faith from [ICON_RES_SUGAR] Sugar, [ICON_RES_WINE] Wine and [ICON_RES_SPICES] Spices.
+				+1 [ICON_PRODUCTION] Production and +1 [ICON_PEACE] Faith from [ICON_RES_INCENSE] Incense, [ICON_RES_WINE] Wine and [ICON_RES_SPICES] Spices.
 			</Text>
 		</Replace>
 		<Replace Tag="TXT_KEY_BELIEF_GOD_FESTIVALS_SHORT"> 
@@ -15849,17 +16804,7 @@ strongest around the Gulf of Bothnia, where land steadily rises about 1 cm a yea
 		</Replace>
 		<Replace Tag="TXT_KEY_BELIEF_GURUSHIP"> 
 			<Text>
-				+2 [ICON_PRODUCTION] Production if city has a Specialist
-			</Text>
-		</Replace>
-		<Replace Tag="TXT_KEY_BELIEF_GURUSHIPP"> 
-			<Text>
 				+2 [ICON_FOOD] Food, +1 [ICON_PRODUCTION] Production and +1 [ICON_GOLD] Gold in Cities working any [ICON_CITIZEN] Specialist
-			</Text>
-		</Replace>
-		<Replace Tag="TXT_KEY_BELIEF_GURUSHIPP_SHORT"> 
-			<Text>
-				Guruship
 			</Text>
 		</Replace>
 		<Replace Tag="TXT_KEY_BELIEF_GURUSHIP_SHORT"> 
@@ -15872,12 +16817,12 @@ strongest around the Gulf of Bothnia, where land steadily rises about 1 cm a yea
 				+5 [ICON_CULTURE] Culture and +5 [ICON_PEACE] Faith
 			</Text>
 		</Replace>
-		<Replace Tag="TXT_KEY_BELIEF_HAJJJJ"> 
+		<Replace Tag="TXT_KEY_BELIEF_HAJJ"> 
 			<Text>
 				+3 [ICON_PRODUCTION] Production, +3 [ICON_FOOD] Food and +3 [ICON_CULTURE] Culture from the [COLOR_POSITIVE_TEXT]Palace[ENDCOLOR]
 			</Text>
 		</Replace>
-		<Replace Tag="TXT_KEY_BELIEF_HAJJJJ_SHORT"> 
+		<Replace Tag="TXT_KEY_BELIEF_HAJJ_SHORT"> 
 			<Text>
 				Hajj
 			</Text>
@@ -15942,7 +16887,7 @@ strongest around the Gulf of Bothnia, where land steadily rises about 1 cm a yea
 				Holy Warriors
 			</Text>
 		</Replace>
-		<Replace Tag="TXT_KEY_BELIEF_HORY_WARRIORS"> 
+		<Replace Tag="TXT_KEY_BELIEF_HOLY_WARRIORS"> 
 			<Text>
 				May purchase military units with [ICON_PEACE] Faith
 			</Text>
@@ -16109,7 +17054,7 @@ strongest around the Gulf of Bothnia, where land steadily rises about 1 cm a yea
 		</Replace>
 		<Replace Tag="TXT_KEY_BELIEF_MESSENGER_GODS"> 
 			<Text>
-				+1 [ICON_RESEARCH] Science, +1 [ICON_GOLD] Gold, and +1 [ICON_PEACE] Faith in Cities with a [ICON_CONNECTED] City Connection
+				+2 [ICON_RESEARCH] Science and +1 [ICON_GOLD] Gold in Cities with a [ICON_CONNECTED] City Connection
 			</Text>
 		</Replace>
 		<Replace Tag="TXT_KEY_BELIEF_MESSENGER_GODS_SHORT"> 
@@ -16319,7 +17264,7 @@ strongest around the Gulf of Bothnia, where land steadily rises about 1 cm a yea
 		</Replace>
 		<Replace Tag="TXT_KEY_BELIEF_PROMISED_LAND"> 
 			<Text>
-				[ICON_RELIGION] Religion spreads 100% faster to your Cities. +67 [ICON_GOLD] Gold (on Quick Speed) when each city first converts to this [ICON_RELIGION] Religion.
+				[ICON_RELIGION] Religion spreads 100% faster to your Cities. +40 [ICON_GOLD] Gold (on Quick Speed) when each city first converts to this [ICON_RELIGION] Religion.
 			</Text>
 		</Replace>
 		<Replace Tag="TXT_KEY_BELIEF_PROMISED_LAND_SHORT"> 
@@ -16729,7 +17674,7 @@ strongest around the Gulf of Bothnia, where land steadily rises about 1 cm a yea
 		</Replace>
 		<Replace Tag="TXT_KEY_BELIEF_WIND"> 
 			<Text>
-				+2 [ICON_PEACE] Faith from [ICON_RES_COTTON] Cotton, [ICON_RES_INCENSE] Incense, [ICON_RES_TEA] Tea, and [ICON_RES_COFFEE] Coffee
+				+2 [ICON_PEACE] Faith from [ICON_RES_COTTON] Cotton, [ICON_RES_SUGAR] Sugar, [ICON_RES_TEA] Tea, and [ICON_RES_COFFEE] Coffee
 			</Text>
 		</Replace>
 		<Replace Tag="TXT_KEY_BELIEF_WIND_SHORT"> 
@@ -16747,12 +17692,12 @@ strongest around the Gulf of Bothnia, where land steadily rises about 1 cm a yea
 				Work Ethic
 			</Text>
 		</Replace>
-		<Replace Tag="TXT_KEY_BELIEF_WORK_ETHIQ"> 
+		<Replace Tag="TXT_KEY_BELIEF_WORK_ETHIC"> 
 			<Text>
 				May purchase [COLOR_POSITIVE_TEXT]Workshops[ENDCOLOR], [COLOR_POSITIVE_TEXT]Windmills[ENDCOLOR], [COLOR_POSITIVE_TEXT]Factories[ENDCOLOR] and [COLOR_POSITIVE_TEXT]Hydro Plants[ENDCOLOR] with [ICON_PEACE] Faith
 			</Text>
 		</Replace>
-		<Replace Tag="TXT_KEY_BELIEF_WORK_ETHIQ_SHORT"> 
+		<Replace Tag="TXT_KEY_BELIEF_WORK_ETHIC_SHORT"> 
 			<Text>
 				Work Ethic
 			</Text>
@@ -16777,12 +17722,12 @@ strongest around the Gulf of Bothnia, where land steadily rises about 1 cm a yea
 				Gain [ICON_PEACE] Faith if you win a battle, and use [ICON_PEACE] Faith to purchase Classical Era land units.
 			</Text>
 		</Replace>
-		<Replace Tag="TXT_KEY_BELIEF_ZACRED_SITES"> 
+		<Replace Tag="TXT_KEY_BELIEF_SACRED_SITES"> 
 			<Text>
 				+2 [ICON_CULTURE] Culture, +2 [ICON_GOLD] Gold, and +2 [ICON_PEACE] Faith from buildings unlocked by [COLOR_POSITIVE_TEXT]Religious Beliefs[ENDCOLOR]
 			</Text>
 		</Replace>
-		<Replace Tag="TXT_KEY_BELIEF_ZACRED_SITES_SHORT"> 
+		<Replace Tag="TXT_KEY_BELIEF_SACRED_SITES_SHORT"> 
 			<Text>
 				Sacred Sites
 			</Text>
@@ -22787,12 +23732,12 @@ strongest around the Gulf of Bothnia, where land steadily rises about 1 cm a yea
 		</Replace>
 		<Replace Tag="TXT_KEY_CITYSTATE_KILWA"> 
 			<Text>
-				Kampala
+				Ashgabat
 			</Text>
 		</Replace>
 		<Replace Tag="TXT_KEY_CITYSTATE_KILWA_ADJ"> 
 			<Text>
-				Kampalan
+				Turkmen
 			</Text>
 		</Replace>
 		<Replace Tag="TXT_KEY_CITYSTATE_KILWA_TEXT"> 
@@ -38395,7 +39340,7 @@ strongest around the Gulf of Bothnia, where land steadily rises about 1 cm a yea
 		</Replace>
 		<Replace Tag="TXT_KEY_CITY_STATE_PERSONALITY_FRIENDLY_TT"> 
 			<Text>
-				A befriended [COLOR_POSITIVE_TEXT]Friendly[ENDCOLOR] City-State will usually make requests that require some peaceful action, like building a Wonder or constructing a Road to them.
+				Influence with a befriended [COLOR_POSITIVE_TEXT]Friendly[ENDCOLOR] City-State decays more slowly, and completing quests grants +25% more influence. These bonuses are lost if you have ever declared war on a city-state.
 			</Text>
 		</Replace>
 		<Replace Tag="TXT_KEY_CITY_STATE_PERSONALITY_HOSTILE"> 
@@ -76300,7 +77245,7 @@ The ship has weather'd every rack; the prize we sought is won."
 		</Replace>
 		<Replace Tag="TXT_KEY_INTERFACEMODE_AIRSTRIKE"> 
 			<Text>
-				Air Strike Mode
+				Air Strike
 			</Text>
 		</Replace>
 		<Replace Tag="TXT_KEY_INTERFACEMODE_AIRSTRIKE_HELP"> 
@@ -114513,7 +115458,7 @@ The ship has weather'd every rack; the prize we sought is won."
 		</Replace>
 		<Replace Tag="TXT_KEY_POLICY_BRANCH_HONOR_HELP"> 
 			<Text>
-				[COLOR_POSITIVE_TEXT]Honor[ENDCOLOR] improves the effectiveness of one's army in a variety of ways.[NEWLINE][NEWLINE]Adopting Honor gives a +33% combat bonus VS [COLOR_POSITIVE_TEXT]Barbarians[ENDCOLOR]. Gain [ICON_CULTURE] Culture for the empire for each enemy unit killed. Unlocks building the [ICON_WONDER_STATUE_ZEUS] Statue of Zeus.[NEWLINE][NEWLINE]Adopting all [COLOR_POSITIVE_TEXT]Policies[ENDCOLOR] in the Honor tree will grant [ICON_RESEARCH] Science for each enemy unit killed. +1 [ICON_FOOD] Food from [ICON_BUILDING_BARRACKS] Barracks, and +2 [ICON_FOOD] Food from [ICON_BUILDING_ARMORY] Armories. [ICON_GREAT_GENERAL] Great Generals can be purchased with [ICON_PEACE] Faith starting in the [COLOR_CYAN]Industrial Era[ENDCOLOR].
+				[COLOR_POSITIVE_TEXT]Honor[ENDCOLOR] improves the effectiveness of one's army in a variety of ways.[NEWLINE][NEWLINE]Adopting Honor gives a +33% combat bonus VS [COLOR_POSITIVE_TEXT]Barbarians[ENDCOLOR]. Gain [ICON_CULTURE] Culture for the empire for each enemy unit killed. Unlocks building the [ICON_WONDER_STATUE_ZEUS] Statue of Zeus.[NEWLINE][NEWLINE]Adopting all [COLOR_POSITIVE_TEXT]Policies[ENDCOLOR] in the Honor tree will grant [ICON_RESEARCH] Science for each enemy unit killed, +1 [ICON_FOOD] Food in each City, and +1 [ICON_FOOD] Food from [ICON_BUILDING_BARRACKS] Barracks and [ICON_BUILDING_ARMORY] Armories. [ICON_GREAT_GENERAL] Great Generals can be purchased with [ICON_PEACE] Faith starting in the [COLOR_CYAN]Industrial Era[ENDCOLOR].
 			</Text>
 		</Replace>
 		<Replace Tag="TXT_KEY_POLICY_BRANCH_LIBERTY"> 
@@ -114573,7 +115518,7 @@ The ship has weather'd every rack; the prize we sought is won."
 		</Replace>
 		<Replace Tag="TXT_KEY_POLICY_BRANCH_PIETY_HELP"> 
 			<Text>
-				[COLOR_POSITIVE_TEXT]Piety[ENDCOLOR] increases the [ICON_PEACE] Faith of empires.[NEWLINE][NEWLINE]Adopting Piety provides you with +1 [ICON_PRODUCTION] Production, +1 [ICON_CULTURE] Culture, and +1 [ICON_PEACE] Faith in the [ICON_CAPITAL] Capital. +50% [ICON_PRODUCTION] Production towards [ICON_BUILDING_SHRINE] Shrines and [ICON_BUILDING_TEMPLE] Temples. Unlocks building the [ICON_WONDER_MOSQUE_OF_DJENNE] Great Mosque of Djenne.[NEWLINE][NEWLINE]Adopting all [COLOR_POSITIVE_TEXT]Policies[ENDCOLOR] in the Piety tree causes a [ICON_PROPHET] Great Prophet to appear. [COLOR_POSITIVE_TEXT]Holy Sites[ENDCOLOR] provide +1 [ICON_FOOD] Food and +3 [ICON_CULTURE] Culture. Provides a free [ICON_BUILDING_GARDEN] Garden in your first 4 cities and allows [ICON_PEACE] Faith purchasing of 1 [ICON_GREAT_PEOPLE] Great Person of every kind with exception to a [ICON_GREAT_SCIENTIST] Great Scientist starting in the [COLOR_CYAN]Industrial Era[ENDCOLOR].
+				[COLOR_POSITIVE_TEXT]Piety[ENDCOLOR] increases the [ICON_PEACE] Faith of empires.[NEWLINE][NEWLINE]Adopting Piety provides you with +1 [ICON_CULTURE] Culture and +1 [ICON_PEACE] Faith in the [ICON_CAPITAL] Capital. +50% [ICON_PRODUCTION] Production towards [ICON_BUILDING_SHRINE] Shrines and [ICON_BUILDING_TEMPLE] Temples. Unlocks building the [ICON_WONDER_MOSQUE_OF_DJENNE] Great Mosque of Djenne.[NEWLINE][NEWLINE]Adopting all [COLOR_POSITIVE_TEXT]Policies[ENDCOLOR] in the Piety tree causes a [ICON_PROPHET] Great Prophet to appear. [COLOR_POSITIVE_TEXT]Holy Sites[ENDCOLOR] provide +1 [ICON_FOOD] Food and +3 [ICON_CULTURE] Culture. Provides a free [ICON_BUILDING_GARDEN] Garden in your first 4 cities and allows [ICON_PEACE] Faith purchasing of 1 [ICON_GREAT_PEOPLE] Great Person of every kind with exception to a [ICON_GREAT_SCIENTIST] Great Scientist starting in the [COLOR_CYAN]Industrial Era[ENDCOLOR].
 			</Text>
 		</Replace>
 		<Replace Tag="TXT_KEY_POLICY_BRANCH_RATIONALISM"> 
@@ -115383,7 +116328,7 @@ The ship has weather'd every rack; the prize we sought is won."
 		</Replace>
 		<Replace Tag="TXT_KEY_POLICY_MANDATE_OF_HEAVEN_HELP"> 
 			<Text>
-				[COLOR_POSITIVE_TEXT]Mandate of Heaven[ENDCOLOR][NEWLINE]+1 [ICON_PEACE] Faith in the [ICON_CAPITAL] Capital and +1 [ICON_HAPPINESS_1] Happiness from each [ICON_BUILDING_TEMPLE] Temple. 20% discount on all purchases of [COLOR_POSITIVE_TEXT]Religious Units[ENDCOLOR] and [COLOR_POSITIVE_TEXT]Buildings[ENDCOLOR] with [ICON_PEACE] Faith.
+				[COLOR_POSITIVE_TEXT]Mandate of Heaven[ENDCOLOR][NEWLINE]+1 [ICON_PRODUCTION] Production and +1 [ICON_PEACE] Faith in the [ICON_CAPITAL] Capital. +1 [ICON_HAPPINESS_1] Happiness from each [ICON_BUILDING_TEMPLE] Temple. 20% discount on all purchases of [COLOR_POSITIVE_TEXT]Religious Units[ENDCOLOR] and [COLOR_POSITIVE_TEXT]Buildings[ENDCOLOR] with [ICON_PEACE] Faith.
 			</Text>
 		</Replace>
 		<Replace Tag="TXT_KEY_POLICY_MARITIME_INFRASTRUCTURE"> 
@@ -115859,7 +116804,7 @@ The ship has weather'd every rack; the prize we sought is won."
 		</Replace>
 		<Replace Tag="TXT_KEY_POLICY_PROFESSIONAL_ARMY_HELP"> 
 			<Text>
-				[COLOR_POSITIVE_TEXT]Professional Army[ENDCOLOR][NEWLINE]+100% [ICON_PRODUCTION] Production towards [ICON_BUILDING_BARRACKS] Barracks, and +50% [ICON_PRODUCTION] Production towards [ICON_BUILDING_ARMORY] Armories and [ICON_BUILDING_MILITARY_ACADEMY] Military Academies. They each provide +1 [ICON_PRODUCTION] Production, +1 [ICON_CULTURE] Culture, and +1 [ICON_GOLD] Gold.
+				[COLOR_POSITIVE_TEXT]Professional Army[ENDCOLOR][NEWLINE]+100% [ICON_PRODUCTION] Production towards [ICON_BUILDING_BARRACKS] Barracks, [ICON_BUILDING_ARMORY] Armories, and [ICON_BUILDING_MILITARY_ACADEMY] Military Academies. They each provide +1 [ICON_PRODUCTION] Production, +1 [ICON_CULTURE] Culture, and +1 [ICON_GOLD] Gold.
 			</Text>
 		</Replace>
 		<Replace Tag="TXT_KEY_POLICY_PROTECTIONISM"> 
@@ -119210,7 +120155,7 @@ The ship has weather'd every rack; the prize we sought is won."
 		</Replace>
 		<Replace Tag="TXT_KEY_PROMOTION_ANTI_GUNPOWDER_HELP"> 
 			<Text>
-				Before engaging in melee, this unit has an extra attack.
+				Before engaging in melee combat, this unit performs a Ranged Attack at [COLOR_RED]half[ENDCOLOR] [ICON_STRENGTH] Strength. +25% [ICON_STRENGTH] Strength VS Gunpowder and Paradropper Units.
 			</Text>
 		</Replace>
 		<Replace Tag="TXT_KEY_PROMOTION_ANTI_HELICOPTER"> 
@@ -120225,12 +121170,12 @@ The ship has weather'd every rack; the prize we sought is won."
 		</Replace>
 		<Replace Tag="TXT_KEY_PROMOTION_HEAVY_CHARGE_DOWNHILL_HELP"> 
 			<Text>
-				If attacking from higher elevation into lower elevation, gains +20% Combat Strength and forces defender to retreat if it inflicts more damage than it receives. A defender who cannot retreat takes 50% additional damage.
+				If Attacking from a Higher Elevation, this unit gains 20% Combat Strength. If the Defender cannot retreat this unit gains 50% Base Combat Strength for that attack. If the Defender can retreat, and takes more damage in combat than this unit, it will retreat.
 			</Text>
 		</Replace>
 		<Replace Tag="TXT_KEY_PROMOTION_HEAVY_CHARGE_HELP"> 
 			<Text>
-				Forces defender to retreat if it inflicts more damage than it receives. A defender who cannot retreat takes extra damage.
+				When Attacking, if the Defender cannot retreat, this unit gains 50% Base Combat Strength for that attack. If the Defender can retreat, and takes more damage in combat than this unit, it will retreat.
 			</Text>
 		</Replace>
 		<Replace Tag="TXT_KEY_PROMOTION_HEAVY_PAYLOAD"> 
@@ -136294,7 +137239,7 @@ The ship has weather'd every rack; the prize we sought is won."
 		</Replace>
 		<Replace Tag="TXT_KEY_TRAIT_CITY_STATE_BONUSES"> 
 			<Text>
-				[ICON_HAPPINESS_1] Happiness, [ICON_FOOD] Food, [ICON_CULTURE] Culture, and [ICON_PEACE] Faith from friendly and allied [ICON_CITY_STATE] City-States increased by 50%. Units gifted by [ICON_CITY_STATE] City-States arrive 50% faster and start with +10 experience.
+				[ICON_HAPPINESS_1] Happiness, [ICON_FOOD] Food, [ICON_CULTURE] Culture, and [ICON_PEACE] Faith from friendly and allied [ICON_CITY_STATE] City-States increased by 50%. Units gifted by [ICON_CITY_STATE] City-States arrive 50% faster and start with +15 experience.
 			</Text>
 		</Replace>
 		<Replace Tag="TXT_KEY_TRAIT_CITY_STATE_BONUSES_SHORT"> 
@@ -136469,7 +137414,7 @@ The ship has weather'd every rack; the prize we sought is won."
 		</Replace>
 		<Replace Tag="TXT_KEY_TRAIT_FIGHT_WELL_DAMAGED"> 
 			<Text>
-				Units fight as though they were at full strength even when damaged. +1 [ICON_CULTURE] Culture from each [ICON_BUILD_FISHING_BOATS] Fishing Boat and +2 [ICON_CULTURE] Culture from each Atoll.
+				Non-Air Units Fight at Full Strength even when Damaged. +1 [ICON_CULTURE] Culture from each [ICON_BUILD_FISHING_BOATS] Fishing Boat and +2 [ICON_CULTURE] Culture from each Atoll.
 			</Text>
 		</Replace>
 		<Replace Tag="TXT_KEY_TRAIT_FIGHT_WELL_DAMAGED_SHORT"> 
@@ -136999,7 +137944,7 @@ The ship has weather'd every rack; the prize we sought is won."
 		</Replace>
 		<Replace Tag="TXT_KEY_TRAIT_SPICE"> 
 			<Text>
-				The first 3 coastal cities founded on a different landmass than the [ICON_CAPITAL] Capital each provide 2 unique Luxury Resources (and can never be razed).
+				The first 3 coastal cities founded on a different landmass than the [ICON_CAPITAL] Capital each provide 2 unique Luxury Resources and +2 [ICON_GOLD] Gold (and can never be razed).
 			</Text>
 		</Replace>
 		<Replace Tag="TXT_KEY_TRAIT_SPICE_SHORT"> 

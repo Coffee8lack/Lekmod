@@ -37,6 +37,22 @@
 // statics
 CvTeam* CvTeam::m_aTeams = NULL;
 
+#ifdef LEKMOD_MINOR_CIV_PERSONALITIES
+static bool DoesMinorTeamBlockWarDeclarationPenalty(TeamTypes eMinorTeam)
+{
+	for(int iMinorCivLoop = MAX_MAJOR_CIVS; iMinorCivLoop < MAX_CIV_PLAYERS; iMinorCivLoop++)
+	{
+		const PlayerTypes eMinor = (PlayerTypes)iMinorCivLoop;
+		if(GET_PLAYER(eMinor).isAlive() && GET_PLAYER(eMinor).getTeam() == eMinorTeam)
+		{
+			return GET_PLAYER(eMinor).GetMinorCivAI()->IsBlocksWarDeclarationPenalty();
+		}
+	}
+
+	return false;
+}
+#endif
+
 //	--------------------------------------------------------------------------------
 void CvTeam::initStatics()
 {
@@ -1494,7 +1510,12 @@ void CvTeam::DoDeclareWar(TeamTypes eTeam, bool bDefensivePact, bool bMinorAllyP
 									// Major declaring war on Minor
 									if(GET_TEAM(eTeam).isMinorCiv())
 									{
-										GET_PLAYER((PlayerTypes) iMajorCivLoop2).GetDiplomacyAI()->ChangeOtherPlayerNumMinorsAttacked((PlayerTypes) iMajorCivLoop, 1);
+#ifdef LEKMOD_MINOR_CIV_PERSONALITIES
+										if(!DoesMinorTeamBlockWarDeclarationPenalty(eTeam))
+#endif
+										{
+											GET_PLAYER((PlayerTypes) iMajorCivLoop2).GetDiplomacyAI()->ChangeOtherPlayerNumMinorsAttacked((PlayerTypes) iMajorCivLoop, 1);
+										}
 									}
 									// Major declaring war on Major
 									else
@@ -1519,7 +1540,14 @@ void CvTeam::DoDeclareWar(TeamTypes eTeam, bool bDefensivePact, bool bMinorAllyP
 								//antonjs: consider: this statement is no longer valid, since current design allows peace to be made; update the implementation
 								if(!isMinorCiv() && !bDefensivePact)
 								{
+#ifdef LEKMOD_MINOR_CIV_PERSONALITIES
+									if(!GET_PLAYER((PlayerTypes) iMinorCivLoop).GetMinorCivAI()->IsBlocksWarDeclarationPenalty())
+									{
+										ChangeNumMinorCivsAttacked(1);
+									}
+#else
 									ChangeNumMinorCivsAttacked(1);
+#endif
 
 									GET_PLAYER((PlayerTypes) iMinorCivLoop).GetMinorCivAI()->DoTeamDeclaredWarOnMe(GetID());
 								}
@@ -1614,6 +1642,14 @@ void CvTeam::DoNowAtWarOrPeace(TeamTypes eTeam, bool bWar)
 
 				if(GET_PLAYER(eMinor).GetMinorCivAI()->IsAllies(ePlayer))
 				{
+#ifdef LEKMOD_MINOR_CIV_PERSONALITIES
+					CvMinorCivPersonalityInfo* pkPersonalityInfo = GET_PLAYER(eMinor).GetMinorCivAI()->GetPersonalityInfo();
+					if(pkPersonalityInfo && pkPersonalityInfo->IsNeverAlliedWarSupport())
+					{
+						continue;
+					}
+#endif
+
 					// Don't declare war on self! (just in case)
 					if(GET_PLAYER(eMinor).getTeam() != eTeam)
 					{
@@ -3664,7 +3700,12 @@ int CvTeam::getEmbarkedExtraSight() const
 
 void CvTeam::changeEmbarkedExtraSight(int iChange)
 {
-	m_iEmbarkedExtraSight = (m_iEmbarkedExtraSight + iChange);
+	if (iChange != 0)
+	{
+		GC.getMap().updateSight(false);
+		m_iEmbarkedExtraSight = (m_iEmbarkedExtraSight + iChange);
+		GC.getMap().updateSight(true);
+	}
 }
 
 // END
@@ -5727,6 +5768,30 @@ void CvTeam::setHasTech(TechTypes eIndex, bool bNewValue, PlayerTypes ePlayer, b
 			{
 				CvPlot* pLoopPlot = GC.getMap().plotByIndexUnchecked(iPlotLoop);
 
+#if defined(LEKMOD_WATER_WALK_IMPROVEMENT_RULES)
+				if (bIsActiveTeam && bNewValue)
+				{
+					const ImprovementTypes eImp = pLoopPlot->getImprovementType();
+					if (eImp != NO_IMPROVEMENT)
+					{
+						CvImprovementEntry* pkImp = GC.getImprovementInfo(eImp);
+						if (pkImp && pkImp->IsActsAsRoute() &&
+							(pkImp->GetActsAsRouteTech() == eIndex || pkImp->GetActsAsRailroadTech() == eIndex))
+						{
+							pLoopPlot->setLayoutDirty(true);
+							for (int iDir = 0; iDir < NUM_DIRECTION_TYPES; ++iDir)
+							{
+								CvPlot* pAdj = plotDirection(pLoopPlot->getX(), pLoopPlot->getY(), (DirectionTypes)iDir);
+								if (pAdj)
+								{
+									pAdj->setLayoutDirty(true);
+								}
+							}
+						}
+					}
+				}
+#endif
+
 				const ResourceTypes eResource = pLoopPlot->getResourceType();
 				if(eResource != NO_RESOURCE)
 				{
@@ -5799,7 +5864,12 @@ void CvTeam::setHasTech(TechTypes eIndex, bool bNewValue, PlayerTypes ePlayer, b
 							if(pLoopPlot->isCity() || pLoopPlot->getImprovementType() != NO_IMPROVEMENT)
 							{
 								// Appropriate Unpillaged Improvement on this Plot?
-								if (pLoopPlot->isCity() || (GC.getImprovementInfo(pLoopPlot->getImprovementType())->IsImprovementResourceTrade(eResource) && !pLoopPlot->IsImprovementPillaged()))
+#ifdef LEKMOD_PRESERVE_UNDISCOVERED_RESOURCES_ON_REMOVE_IMPROVEMENT
+								const bool bConnectsResource = pLoopPlot->isCity() || (pLoopPlot->DoesImprovementConnectResource(eResource) && !pLoopPlot->IsImprovementPillaged());
+#else
+								const bool bConnectsResource = pLoopPlot->isCity() || (GC.getImprovementInfo(pLoopPlot->getImprovementType())->IsImprovementResourceTrade(eResource) && !pLoopPlot->IsImprovementPillaged());
+#endif
+								if (bConnectsResource)
 								{
 									for(int iI = 0; iI < MAX_PLAYERS; iI++)
 									{
@@ -6806,7 +6876,11 @@ void CvTeam::processTech(TechTypes eTech, int iChange)
 			kPlayer.changeUnitFortificationModifier(pTech->GetUnitFortificationModifier() * iChange);
 			kPlayer.changeUnitBaseHealModifier(pTech->GetUnitBaseHealModifier() * iChange);
 			kPlayer.changeWorkerSpeedModifier(pTech->GetWorkerSpeedModifier() * iChange);
+#if !defined(LEK_YIELD_TOURISM) // Instead of loading it into its own int, just put it into the player YieldModifier array
 			kPlayer.ChangeInfluenceSpreadModifier(pTech->GetInfluenceSpreadModifier() * iChange);
+#else
+			kPlayer.changeYieldRateModifier(YIELD_TOURISM, pTech->GetInfluenceSpreadModifier() * iChange);
+#endif
 			kPlayer.ChangeExtraVotesPerDiplomat(pTech->GetExtraVotesPerDiplomat() * iChange);
 #if defined(MISC_CHANGES) // Change votes if the tech gives the player extra votes
 			kPlayer.ChangeTechExtraLeagueVotes(pTech->GetExtraLeagueVotes() * iChange);
@@ -7006,8 +7080,232 @@ void CvTeam::processTech(TechTypes eTech, int iChange)
 					}
 				}
 			}
+#if defined(LEKMOD_INSTANT_UNLOCK_TRANSFER)
+			// Ok, loop through every city if this tech obsoletes a Unit and transfer the production to the newly unlocked unit.
+			for (int unit = 0; unit < GC.getNumUnitInfos(); unit++)
+			{
+				UnitTypes eUnit = static_cast<UnitTypes>(unit);
+				if (eUnit == NO_UNIT)
+					continue;
+				CvUnitEntry* pUnitInfo = GC.getUnitInfo(eUnit);
+				if (pUnitInfo == NULL)
+					continue;
+				if (pUnitInfo->GetObsoleteTech() == eTech)
+				{
+					// What unit do we upgrade into?
+					UnitTypes eUpgradeUnitType = NO_UNIT;
+					for (int unitClass = 0; unitClass < GC.getNumUnitClassInfos(); unitClass++)
+					{
+						if (static_cast<UnitTypes>(pUnitInfo->GetUpgradeUnitClass(unitClass)))
+						{
+							eUpgradeUnitType = static_cast<UnitTypes>(kPlayer.getCivilizationInfo().getCivilizationUnits(unitClass));
+						}
+					}
+					if (eUpgradeUnitType == NO_UNIT)
+						continue;
+					int iLoop;
+					CvCity* pLoopCity;
+					for (pLoopCity = kPlayer.firstCity(&iLoop); pLoopCity != NULL; pLoopCity = kPlayer.nextCity(&iLoop))
+					{
+						int iProductionTimes100 = pLoopCity->getUnitProductionTimes100(eUnit);
+						OrderData* pOrder = pLoopCity->headOrderQueueNode();
+						if (pOrder == NULL) // Nothing in queue.
+							continue;
+						// Has this city commited production to making this unit, or is it currently trying to make this unit?
+						if (iProductionTimes100 || (iProductionTimes100 > 0 || pOrder->iData1 == eUnit))
+						{
+							// clean order queue and insert the new unit to produce into the queue positions previously occupied by the old unit
+							int iNumOrders = pLoopCity->getOrderQueueLength();
+							std::vector<OrderData> oldQueue;
+							for (int i = 0; i < iNumOrders; i++)
+							{
+								OrderData* order = pLoopCity->getOrderFromQueue(i);
+								if (order != NULL)
+								{
+									oldQueue.push_back(*order);
+								}
+							}
+							pLoopCity->clearOrderQueue();
+							for (uint old = 0; old < oldQueue.size(); old++)
+							{
+								OrderData order = oldQueue[old];
+								if (order.eOrderType == ORDER_TRAIN && order.iData1 == eUnit && pLoopCity->canTrain(eUpgradeUnitType))
+								{
+									order.iData1 = eUpgradeUnitType;
+								}
+								pLoopCity->pushOrder(order.eOrderType, order.iData1, order.iData2, order.bSave, false, true, false);
+							}
+							pLoopCity->setUnitProductionTimes100(eUnit, 0);
+							pLoopCity->setUnitProductionTimes100(eUpgradeUnitType, iProductionTimes100);
+						}
+					}
+				}
+			}
+#endif
+			CvPlayerTraits* pTraits = kPlayer.GetPlayerTraits();
+			const std::vector<FreeResourceCities>& vRules = pTraits->GetFreeResourceCities();
+			std::vector<std::pair<int, int> >& vGroupPriority = pTraits->GetGroupPriority();
+			std::vector<std::pair<int, int> >& vUsedGroupAreas = pTraits->GetUsedGroupAreas();
 
+			int iLoop = 0;
+			for (pLoopCity = kPlayer.firstCity(&iLoop); pLoopCity != NULL; pLoopCity = kPlayer.nextCity(&iLoop))
+			{
+				if (!pLoopCity)
+					continue;
 
+				CvPlot* pCityPlot = pLoopCity->plot();
+				if (!pCityPlot)
+					continue;
+
+				std::vector<const FreeResourceCities*> vRulesToPlace;
+				std::map<int, std::vector<const FreeResourceCities*> > groupedRules;
+
+				for (size_t i = 0; i < vRules.size(); ++i)
+				{
+					const FreeResourceCities& kRule = vRules[i];
+					if (!kRule.m_bTech)
+						continue;
+					if (kRule.m_eTechRequired != eTech)
+						continue;
+					if (kRule.m_eResource == NO_RESOURCE)
+						continue;
+					if (kRule.m_iResourceQuantity <= 0)
+						continue;
+					if (kRule.m_iGroup < 0)
+						continue;
+					if (kRule.m_bUniqueArea)
+					{
+						bool bAlreadyUsedArea = false;
+						const int iArea = pCityPlot->getArea();
+
+						for (size_t iUsed = 0; iUsed < vUsedGroupAreas.size(); ++iUsed)
+						{
+							if (vUsedGroupAreas[iUsed].first == kRule.m_iGroup && vUsedGroupAreas[iUsed].second == iArea)
+							{
+								bAlreadyUsedArea = true;
+								break;
+							}
+						}
+
+						if (bAlreadyUsedArea)
+							continue;
+					}
+					if (kRule.m_bCycleGroup)
+					{
+						groupedRules[kRule.m_iGroup].push_back(&kRule);
+					}
+					else
+					{
+						vRulesToPlace.push_back(&kRule);
+					}
+				}
+				for (std::map<int, std::vector<const FreeResourceCities*> >::iterator it = groupedRules.begin(); it != groupedRules.end(); ++it)
+				{
+					const int iGroup = it->first;
+					const std::vector<const FreeResourceCities*>& vGroupRules = it->second;
+
+					int iWantedPriority = 0;
+					bool bFoundPriorityEntry = false;
+
+					for (size_t iPriority = 0; iPriority < vGroupPriority.size(); ++iPriority)
+					{
+						if (vGroupPriority[iPriority].first == iGroup)
+						{
+							iWantedPriority = vGroupPriority[iPriority].second;
+							bFoundPriorityEntry = true;
+							break;
+						}
+					}
+					const FreeResourceCities* pChosen = NULL;
+					for (size_t iRule = 0; iRule < vGroupRules.size(); ++iRule)
+					{
+						const FreeResourceCities* pRule = vGroupRules[iRule];
+						if (!pRule)
+							continue;
+						if (pRule->m_iPriority == iWantedPriority)
+						{
+							pChosen = pRule;
+							break;
+						}
+					}
+					if (!pChosen)
+						continue;
+					vRulesToPlace.push_back(pChosen);
+					if (bFoundPriorityEntry)
+					{
+						for (size_t iPriority = 0; iPriority < vGroupPriority.size(); ++iPriority)
+						{
+							if (vGroupPriority[iPriority].first == iGroup)
+							{
+								vGroupPriority[iPriority].second = iWantedPriority + 1;
+								break;
+							}
+						}
+					}
+					else
+					{
+						vGroupPriority.push_back(std::make_pair(iGroup, iWantedPriority + 1));
+					}
+				}
+
+				for (size_t i = 0; i < vRulesToPlace.size(); ++i)
+				{
+					const FreeResourceCities* pRule = vRulesToPlace[i];
+					if (!pRule)
+						continue;
+
+					bool bPlaced = false;
+
+					if (pRule->m_bCity)
+					{
+#ifdef LEKMOD_FREE_RESOURCE_CITY_GRANT
+						pLoopCity->GrantFreeResourceFromTrait(pRule->m_eResource, pRule->m_iResourceQuantity);
+						bPlaced = true;
+#else
+						pCityPlot->setResourceType(NO_RESOURCE, 0);
+						pCityPlot->setResourceType(pRule->m_eResource, pRule->m_iResourceQuantity);
+						pCityPlot->updateYield();
+
+						bPlaced = true;
+#endif
+					}
+					else
+					{
+						CvPlot* pTargetPlot = pLoopCity->addResourceLocally(NULL, pRule->m_eResource, pRule->m_iResourceQuantity);
+						if (pTargetPlot)
+						{
+							if (pRule->m_bClaimPlot && pTargetPlot->getOwner() == NO_PLAYER)
+							{
+								pTargetPlot->setOwner(kPlayer.GetID(), pLoopCity->GetID());
+							}
+
+							pTargetPlot->updateYield();
+							bPlaced = true;
+						}
+					}
+
+					if (bPlaced && pRule->m_bUniqueArea)
+					{
+						bool bAlreadyStored = false;
+						const int iArea = pCityPlot->getArea();
+
+						for (size_t iUsed = 0; iUsed < vUsedGroupAreas.size(); ++iUsed)
+						{
+							if (vUsedGroupAreas[iUsed].first == pRule->m_iGroup &&
+								vUsedGroupAreas[iUsed].second == iArea)
+							{
+								bAlreadyStored = true;
+								break;
+							}
+						}
+
+						if (!bAlreadyStored)
+						{
+							vUsedGroupAreas.push_back(std::make_pair(pRule->m_iGroup, iArea));
+						}
+					}
+				}
+			}
 		}
 	}
 
@@ -7460,6 +7758,28 @@ void CvTeam::SetCurrentEra(EraTypes eNewValue)
 				{
 					kPlayer.ChangeNumFreePolicies(iNumFreePolicies);
 				}
+#if defined(LEKMOD_UNIT_STRENGTH_PROMOTION_ERA)
+				int iLoop = 0;
+				CvUnit* pLoopUnit = NULL;
+				for (pLoopUnit = kPlayer.firstUnit(&iLoop); pLoopUnit != NULL; pLoopUnit = kPlayer.nextUnit(&iLoop))
+				{
+					CvUnitEntry& pUnitInfo = pLoopUnit->getUnitInfo();
+					for (int jJ = 0; jJ < GC.getNumPromotionInfos(); jJ++)
+					{
+						PromotionTypes ePromotion = static_cast<PromotionTypes>(jJ);
+						if (pUnitInfo.IsFreePromotionEra(ePromotion, eNewValue))
+						{
+							if (!pLoopUnit->isHasPromotion(ePromotion))
+							{
+								pLoopUnit->setHasPromotion(ePromotion, true);
+							}
+						}
+					}
+					pLoopUnit->ChangeBaseCombatStrength(pUnitInfo.GetEraStrengthChanges(eNewValue));
+					pLoopUnit->ChangeBaseRangedCombatStrength(pUnitInfo.GetEraRangedStrengthChanges(eNewValue));
+					pLoopUnit->changeExtraMoves(pUnitInfo.GetEraMovesChanges(eNewValue));
+				}
+#endif
 			}
 		}
 #if defined(LEKMOD_ERA_ENHANCED_YIELDS)

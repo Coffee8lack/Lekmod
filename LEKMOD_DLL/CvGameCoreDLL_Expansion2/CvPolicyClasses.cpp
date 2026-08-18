@@ -279,8 +279,16 @@ CvPolicyEntry::CvPolicyEntry(void):
 	m_paiBuildingClassHappiness(NULL),
 	m_paiFreeUnitClasses(NULL),
 	m_paiTourismOnUnitCreation(NULL),
+#if defined(TRADE_REFACTOR)
+	m_ppiMinorTradeRouteDomainYieldChanges(NULL),
+	m_ppiTradeConnectionLandYieldChanges(NULL),
+	m_ppiTradeConnectionSeaYieldChanges(NULL),
+	m_ppiTradeConnectionLandYieldModifiers(NULL),
+	m_ppiTradeConnectionSeaYieldModifiers(NULL),
+#endif
 #if defined(FULL_YIELD_FROM_KILLS)
 	m_paiYieldFromKills(NULL),
+	m_paiYieldFromKillsMax(NULL),
 #endif
 #if defined(LEKMOD_v34)
 	m_piPolicyResourceQuantity(NULL),
@@ -290,6 +298,9 @@ CvPolicyEntry::CvPolicyEntry(void):
 #if defined(LEKMOD_FIX_SCHOLASTICISM)
 	m_paiMinorFriendYieldBonus(NULL),
 	m_paiMinorAllyYieldBonus(NULL),
+#endif
+#if defined(LEKMOD_EXPERIMENTAL_CHANGES)
+	m_piWorldWonderYieldChanges(NULL),
 #endif
 	m_paiHurryModifier(NULL),
 	m_pabSpecialistValid(NULL),
@@ -380,8 +391,16 @@ CvPolicyEntry::~CvPolicyEntry(void)
 	SAFE_DELETE_ARRAY(m_paiBuildingClassHappiness);
 	SAFE_DELETE_ARRAY(m_paiFreeUnitClasses);
 	SAFE_DELETE_ARRAY(m_paiTourismOnUnitCreation);
+#if defined(TRADE_REFACTOR)
+	CvDatabaseUtility::SafeDelete2DArray(m_ppiMinorTradeRouteDomainYieldChanges);
+	CvDatabaseUtility::SafeDelete2DArray(m_ppiTradeConnectionLandYieldChanges);
+	CvDatabaseUtility::SafeDelete2DArray(m_ppiTradeConnectionSeaYieldChanges);
+	CvDatabaseUtility::SafeDelete2DArray(m_ppiTradeConnectionLandYieldModifiers);
+	CvDatabaseUtility::SafeDelete2DArray(m_ppiTradeConnectionSeaYieldModifiers);
+#endif
 #if defined(FULL_YIELD_FROM_KILLS)
 	SAFE_DELETE_ARRAY(m_paiYieldFromKills);
+	SAFE_DELETE_ARRAY(m_paiYieldFromKillsMax);
 #endif
 #if defined(LEKMOD_v34)
 	SAFE_DELETE_ARRAY(m_piPolicyResourceQuantity);
@@ -391,6 +410,9 @@ CvPolicyEntry::~CvPolicyEntry(void)
 #if defined(LEKMOD_FIX_SCHOLASTICISM)
 	CvDatabaseUtility::SafeDelete2DArray(m_paiMinorFriendYieldBonus);
 	CvDatabaseUtility::SafeDelete2DArray(m_paiMinorAllyYieldBonus);
+#endif
+#if defined(LEKMOD_EXPERIMENTAL_CHANGES)
+	SAFE_DELETE_ARRAY(m_piWorldWonderYieldChanges);
 #endif
 
 //	SAFE_DELETE_ARRAY(m_pabHurry);
@@ -475,7 +497,9 @@ bool CvPolicyEntry::CacheResults(Database::Results& kResults, CvDatabaseUtility&
 #ifdef FRUITY_TRADITION_ARISTOCRACY
 	m_iCapitalCulturePerUniqueLuxury = kResults.GetInt("CapitalCulturePerUniqueLuxury");
 #endif
+#if !defined(LEKMOD_EXPERIMENTAL_CHANGES)
 	m_iCulturePerWonder = kResults.GetInt("CulturePerWonder");
+#endif
 	m_iCultureWonderMultiplier = kResults.GetInt("CultureWonderMultiplier");
 	m_iCulturePerTechResearched = kResults.GetInt("CulturePerTechResearched");
 	m_iCultureImprovementChange = kResults.GetInt("CultureImprovementChange");
@@ -668,7 +692,9 @@ bool CvPolicyEntry::CacheResults(Database::Results& kResults, CvDatabaseUtility&
 	m_iCityStateBonusModifier = kResults.GetInt("CityStateBonusModifier"); // NQMP GJS - Patronage Finisher
 	m_iExtraTerritoryClaim = kResults.GetInt("ExtraTerritoryClaim"); // NQMP GJS - Colonialism
 	m_iExtraTourismPerGreatWork = kResults.GetInt("ExtraTourismPerGreatWork"); // NQMP GJS - Cultural Exchange
+#if !defined(LEK_YIELD_TOURISM) && defined(LEKMOD_EXPERIMENTAL_CHANGES)
 	m_iTourismPerWonder = kResults.GetInt("TourismPerWonder"); // NQMP GJS - Flourishing of the Arts
+#endif
 #ifdef NQ_TOURISM_PER_CITY
 	m_iTourismPerCity = kResults.GetInt("TourismPerCity");
 #endif
@@ -755,11 +781,105 @@ bool CvPolicyEntry::CacheResults(Database::Results& kResults, CvDatabaseUtility&
 	kUtility.PopulateArrayByValue(m_paiFreeUnitClasses, "UnitClasses", "Policy_FreeUnitClasses", "UnitClassType", "PolicyType", szPolicyType, "Count");
 	kUtility.PopulateArrayByValue(m_paiTourismOnUnitCreation, "UnitClasses", "Policy_TourismOnUnitCreation", "UnitClassType", "PolicyType", szPolicyType, "Tourism");
 #if defined(FULL_YIELD_FROM_KILLS)
-	kUtility.SetYields(m_paiYieldFromKills, "Policy_YieldFromKills", "PolicyType", szPolicyType);
+	{
+		kUtility.InitializeArray(m_paiYieldFromKills, "Yields", 0);
+		kUtility.InitializeArray(m_paiYieldFromKillsMax, "Yields", 0);
+		std::string sqlKey = "Policy_YieldFromKills";
+		Database::Results* pResults = kUtility.GetResults(sqlKey);
+		if (pResults == NULL)
+		{
+			const char* szSQL =
+				"SELECT Yields.ID, Yield, COALESCE(Max, 0) "
+				"FROM Policy_YieldFromKills "
+				"INNER JOIN Yields ON Yields.Type = YieldType "
+				"WHERE PolicyType = ?";
+			pResults = kUtility.PrepareResults(sqlKey, szSQL);
+		}
+
+		pResults->Bind(1, szPolicyType);
+
+		while (pResults->Step())
+		{
+			const int iYieldID = pResults->GetInt(0);
+			m_paiYieldFromKills[iYieldID] = pResults->GetInt(1);
+			m_paiYieldFromKillsMax[iYieldID] = pResults->GetInt(2);
+		}
+		pResults->Reset();
+	}
+#endif
+#if defined(TRADE_REFACTOR)
+	{
+		kUtility.Initialize2DArray(m_ppiMinorTradeRouteDomainYieldChanges, "Domains", "Yields");
+		kUtility.Initialize2DArray(m_ppiTradeConnectionLandYieldChanges, "TradeConnections", "Yields");
+		kUtility.Initialize2DArray(m_ppiTradeConnectionSeaYieldChanges, "TradeConnections", "Yields");
+		std::string strKey("Policy_TradeRouteYieldChanges");
+		Database::Results* pResults = kUtility.GetResults(strKey);
+		if (pResults == NULL)
+		{
+			const char* szSQL =
+				"SELECT TradeConnections.ID as TradeConnectionID, Domains.ID as DomainID, Yields.ID as YieldID, YieldTimes100, CityStateOnly  "
+				"FROM Policy_TradeRouteYieldChanges "
+				"INNER JOIN TradeConnections ON TradeConnections.Type = TradeConnectionType "
+				"INNER JOIN Domains ON Domains.Type = DomainType "
+				"INNER JOIN Yields ON Yields.Type = YieldType "
+				"WHERE PolicyType = ?";
+			pResults = kUtility.PrepareResults(strKey, szSQL);
+		}
+		pResults->Bind(1, szPolicyType);
+		while (pResults->Step())
+		{
+			const int iTradeConnectionID = pResults->GetInt(0);
+			const int iDomainID = pResults->GetInt(1);
+			const int iYieldID = pResults->GetInt(2);
+			const int iYieldTimes100 = pResults->GetInt(3);
+			const bool bCityStateOnly = pResults->GetBool(4);
+			// if bCityStateOnly is true, set minor trade route yield changes, else set normal trade route yield changes
+			if (bCityStateOnly && TRADE_CONNECTION_INTERNATIONAL == iTradeConnectionID) // CS routes are always international, so domain switch is the only factor
+				m_ppiMinorTradeRouteDomainYieldChanges[iDomainID][iYieldID] = iYieldTimes100;
+			else // not to city state 
+			{
+				if (iDomainID == DOMAIN_LAND)
+					m_ppiTradeConnectionLandYieldChanges[iTradeConnectionID][iYieldID] = iYieldTimes100;
+				else if (iDomainID == DOMAIN_SEA)
+					m_ppiTradeConnectionSeaYieldChanges[iTradeConnectionID][iYieldID] = iYieldTimes100;
+			}
+		}
+		pResults->Reset();
+	}
+	// Trade route yield modifiers
+	{
+		kUtility.Initialize2DArray(m_ppiTradeConnectionLandYieldModifiers, "TradeConnections", "Yields");
+		kUtility.Initialize2DArray(m_ppiTradeConnectionSeaYieldModifiers, "TradeConnections", "Yields");
+		std::string strKey("Policy_TradeRouteYieldModifiers");
+		Database::Results* pResults = kUtility.GetResults(strKey);
+		if (pResults == NULL)
+		{
+			const char* szSQL =
+				"SELECT TradeConnections.ID as TradeConnectionID, Domains.ID as DomainID, Yields.ID as YieldID, YieldModifier  "
+				"FROM Policy_TradeRouteYieldModifiers "
+				"INNER JOIN TradeConnections ON TradeConnections.Type = TradeConnectionType "
+				"INNER JOIN Domains ON Domains.Type = DomainType "
+				"INNER JOIN Yields ON Yields.Type = YieldType "
+				"WHERE PolicyType = ?";
+			pResults = kUtility.PrepareResults(strKey, szSQL);
+		}
+		pResults->Bind(1, szPolicyType);
+		while (pResults->Step())
+		{
+			const int iTradeConnectionID = pResults->GetInt(0);
+			const int iDomainID = pResults->GetInt(1);
+			const int iYieldID = pResults->GetInt(2);
+			const int iYieldModifier = pResults->GetInt(3);
+			if (iDomainID == DOMAIN_LAND)
+				m_ppiTradeConnectionLandYieldModifiers[iTradeConnectionID][iYieldID] = iYieldModifier;
+			else if (iDomainID == DOMAIN_SEA)
+				m_ppiTradeConnectionSeaYieldModifiers[iTradeConnectionID][iYieldID] = iYieldModifier;
+		}
+		pResults->Reset();
+	}
 #endif
 #if defined(LEKMOD_v34) // Resource quantity array
 	kUtility.PopulateArrayByValue(m_piPolicyResourceQuantity, "Resources", "Policy_ResourceQuantity", "ResourceType", "PolicyType", szPolicyType, "Quantity");
-
 	{ // Policy_ResourceClassYieldChanges
 		kUtility.Initialize2DArray(m_ppiPolicyResourceClassYieldChanges, "ResourceClasses", "Yields");
 
@@ -844,6 +964,47 @@ bool CvPolicyEntry::CacheResults(Database::Results& kResults, CvDatabaseUtility&
 			m_paiMinorAllyYieldBonus[EraID][iYieldID] = iAllyYieldBonus;
 		}
 		pResults->Reset();
+	}
+#endif
+#if defined(LEKMOD_EXPERIMENTAL_CHANGES)
+	//kUtility.SetYields(m_piWorldWonderYieldChanges, "WorldWonderYieldChanges", "PolicyType", szPolicyType);
+	// Have to do a complex loader, to account for the exist ints
+	// WorldWonderYieldChanges
+	int iCultureFromWonders = kResults.GetInt("CulturePerWonder");
+#if defined(LEK_YIELD_TOURISM)
+	int iTourismFromWonders = kResults.GetInt("TourismPerWonder");
+#endif
+	{
+		kUtility.InitializeArray(m_piWorldWonderYieldChanges, "Yields", 0);
+		std::string key("WorldWonderYieldChanges"); // Table is generic
+		Database::Results* result = kUtility.GetResults(key);
+		if(result == NULL)
+		{
+			const char* query = 
+				"SELECT Yields.ID as YieldID, Yield "
+				"FROM WorldWonderYieldChanges "
+				"INNER JOIN Yields ON Yields.Type = WorldWonderYieldChanges.YieldType "
+				"WHERE PolicyType = ?";
+			result = kUtility.PrepareResults(key, query);
+		}
+		result->Bind(1, szPolicyType);
+		while(result->Step())
+		{
+			const int yieldID = result->GetInt(0);
+			const int yieldChange = result->GetInt(1);
+			m_piWorldWonderYieldChanges[yieldID] = yieldChange;
+			if (yieldID == YIELD_CULTURE)
+			{
+				m_piWorldWonderYieldChanges[YIELD_CULTURE] += iCultureFromWonders;
+			}
+#if defined(LEK_YIELD_TOURISM)
+			else if (yieldID == YIELD_TOURISM)
+			{
+				m_piWorldWonderYieldChanges[YIELD_TOURISM] += iTourismFromWonders;
+			}
+#endif
+		}
+
 	}
 #endif
 	//BuildingYieldModifiers
@@ -2666,6 +2827,54 @@ int CvPolicyEntry::GetTourismByUnitClassCreated(int i) const
 	CvAssertMsg(i > -1, "Index out of bounds");
 	return m_paiTourismOnUnitCreation ? m_paiTourismOnUnitCreation[i] : -1;
 }
+#if defined(TRADE_REFACTOR)
+/// Yield Changes based on Domain for Trade Routes to City States
+int CvPolicyEntry::GetMinorTradeRouteDomainYieldChanges(int i, int j) const
+{ 
+	CvAssertMsg(i < GC.getNumDomainInfos(), "Index out of bounds");
+	CvAssertMsg(i > -1, "Index out of bounds");
+	CvAssertMsg(j < NUM_YIELD_TYPES, "Index out of bounds");
+	CvAssertMsg(j > -1, "Index out of bounds");
+	return m_ppiMinorTradeRouteDomainYieldChanges ? m_ppiMinorTradeRouteDomainYieldChanges[i][j] : 0;
+}
+/// Yield Changes based on TradeConnection Type for Land Trade Routes
+int CvPolicyEntry::GetTradeConnectionLandYieldChanges(int i, int j) const
+{
+	CvAssertMsg(i < NUM_TRADE_CONNECTION_TYPES, "Index out of bounds");
+	CvAssertMsg(i > -1, "Index out of bounds");
+	CvAssertMsg(j < NUM_YIELD_TYPES, "Index out of bounds");
+	CvAssertMsg(j > -1, "Index out of bounds");
+	return m_ppiTradeConnectionLandYieldChanges ? m_ppiTradeConnectionLandYieldChanges[i][j] : 0;
+}
+/// Yield Changes based on TradeConnection Type for Sea Trade Routes
+int CvPolicyEntry::GetTradeConnectionSeaYieldChanges(int i, int j) const
+{
+	CvAssertMsg(i < NUM_TRADE_CONNECTION_TYPES, "Index out of bounds");
+	CvAssertMsg(i > -1, "Index out of bounds");
+	CvAssertMsg(j < NUM_YIELD_TYPES, "Index out of bounds");
+	CvAssertMsg(j > -1, "Index out of bounds");
+	return m_ppiTradeConnectionSeaYieldChanges ? m_ppiTradeConnectionSeaYieldChanges[i][j] : 0;
+}
+/// Yield Modifier for Land Trade Routes of eTradeConnection Type
+int CvPolicyEntry::GetTradeConnectionLandYieldModifier(int i, int j) const
+{
+	CvAssertMsg(i < NUM_TRADE_CONNECTION_TYPES, "Index out of bounds");
+	CvAssertMsg(i > -1, "Index out of bounds");
+	CvAssertMsg(j < NUM_YIELD_TYPES, "Index out of bounds");
+	CvAssertMsg(j > -1, "Index out of bounds");
+	return m_ppiTradeConnectionLandYieldModifiers ? m_ppiTradeConnectionLandYieldModifiers[i][j] : 0;
+}
+/// Yield Modifier for Sea Trade Routes of eTradeConnection Type
+int CvPolicyEntry::GetTradeConnectionSeaYieldModifier(int i, int j) const
+{
+	CvAssertMsg(i < NUM_TRADE_CONNECTION_TYPES, "Index out of bounds");
+	CvAssertMsg(i > -1, "Index out of bounds");
+	CvAssertMsg(j < NUM_YIELD_TYPES, "Index out of bounds");
+	CvAssertMsg(j > -1, "Index out of bounds");
+	return m_ppiTradeConnectionSeaYieldModifiers ? m_ppiTradeConnectionSeaYieldModifiers[i][j] : 0;
+}
+#endif
+/// 
 #if defined(FULL_YIELD_FROM_KILLS)
 /// Instant Yield from Killing Units
 int CvPolicyEntry::GetYieldFromKills(int i) const
@@ -2673,6 +2882,13 @@ int CvPolicyEntry::GetYieldFromKills(int i) const
 	CvAssertMsg(i < NUM_YIELD_TYPES, "Index out of bounds");
 	CvAssertMsg(i > -1, "Index out of bounds");
 	return m_paiYieldFromKills ? m_paiYieldFromKills[i] : -1;
+}
+/// Cap on yield from kills for this yield type (0 = uncapped / use global)
+int CvPolicyEntry::GetYieldFromKillsMax(int i) const
+{
+	CvAssertMsg(i < NUM_YIELD_TYPES, "Index out of bounds");
+	CvAssertMsg(i > -1, "Index out of bounds");
+	return m_paiYieldFromKillsMax ? m_paiYieldFromKillsMax[i] : 0;
 }
 #endif
 #if defined(LEKMOD_v34)
@@ -2715,6 +2931,15 @@ int CvPolicyEntry::GetMinorAllyYieldBonus(int i, int j) const
 	CvAssertMsg(j < NUM_YIELD_TYPES, "Yield index out of bounds");
 	CvAssertMsg(j > -1, "Yield index out of bounds");
 	return m_paiMinorAllyYieldBonus ? m_paiMinorAllyYieldBonus[i][j] : 0;
+}
+#endif
+#if defined(LEKMOD_EXPERIMENTAL_CHANGES)
+// Yield bonus to every World Wonder
+int CvPolicyEntry::GetWorldWonderYieldChange(int i) const
+{
+	CvAssertMsg(i < NUM_YIELD_TYPES, "Index out of bounds");
+	CvAssertMsg(i > -1, "Index out of bounds");
+	return m_piWorldWonderYieldChanges ? m_piWorldWonderYieldChanges[i] : 0;
 }
 #endif
 /// Is this hurry type now enabled?
@@ -2944,6 +3169,7 @@ CvPolicyBranchEntry::CvPolicyBranchEntry(void):
 	m_iFreeFinishingPolicy(NO_POLICY),
 	m_iFirstAdopterFreePolicies(0),
 	m_iSecondAdopterFreePolicies(0),
+	// Arrays
 	m_piPolicyBranchDisables(NULL)
 {
 }
@@ -2983,7 +3209,7 @@ bool CvPolicyBranchEntry::CacheResults(Database::Results& kResults, CvDatabaseUt
 	m_bDelayWhenNoCulture = kResults.GetBool("AIDelayNoCulture");
 	m_bDelayWhenNoCityStates = kResults.GetBool("AIDelayNoCityStates");
 	m_bDelayWhenNoScience = kResults.GetBool("AIDelayNoScience");
-
+	m_szIconString = kResults.GetText("IconString");
 	//PolicyBranch_Disables
 	{
 		kUtility.InitializeArray(m_piPolicyBranchDisables, "PolicyBranchTypes", (int)NO_POLICY_BRANCH_TYPE);
@@ -4358,6 +4584,98 @@ int CvPlayerPolicies::GetTourismFromUnitCreation(UnitClassTypes eUnitClass) cons
 
 	return iTourism;
 }
+#if defined(TRADE_REFACTOR)
+/// How much Yield are we getting from sending a Trade Route to a City-State?
+int CvPlayerPolicies::GetMinorTradeRouteDomainYieldChanges(DomainTypes eDomain, YieldTypes eYield) const
+{
+	int iYield = 0;
+	for (int i = 0; i < m_pPolicies->GetNumPolicies(); i++)
+	{
+		// Do we have this policy?
+		if (m_pabHasPolicy[i] && !IsPolicyBlocked((PolicyTypes)i))
+		{
+			CvPolicyEntry* pPolicy = m_pPolicies->GetPolicyEntry(i);
+			if (pPolicy->GetMinorTradeRouteDomainYieldChanges(eDomain, eYield) > 0)
+			{
+				iYield += pPolicy->GetMinorTradeRouteDomainYieldChanges(eDomain, eYield);
+			}
+		}
+	}
+	return iYield;
+}
+/// How much eYield are we getting from Sending eTradeConnection on land?
+int CvPlayerPolicies::GetTradeConnectionLandYieldChanges(TradeConnectionType eTradeConnection, YieldTypes eYield) const
+{
+	int iYield = 0;
+	for (int i = 0; i < m_pPolicies->GetNumPolicies(); i++)
+	{
+		// Do we have this policy?
+		if (m_pabHasPolicy[i] && !IsPolicyBlocked((PolicyTypes)i))
+		{
+			CvPolicyEntry* pPolicy = m_pPolicies->GetPolicyEntry(i);
+			if (pPolicy->GetTradeConnectionLandYieldChanges(eTradeConnection, eYield) > 0)
+			{
+				iYield += pPolicy->GetTradeConnectionLandYieldChanges(eTradeConnection, eYield);
+			}
+		}
+	}
+	return iYield;
+}
+/// How much eYield are we getting from Sending eTradeConnection on sea?
+int CvPlayerPolicies::GetTradeConnectionSeaYieldChanges(TradeConnectionType eTradeConnection, YieldTypes eYield) const
+{
+	int iYield = 0;
+	for (int i = 0; i < m_pPolicies->GetNumPolicies(); i++)
+	{
+		// Do we have this policy?
+		if (m_pabHasPolicy[i] && !IsPolicyBlocked((PolicyTypes)i))
+		{
+			CvPolicyEntry* pPolicy = m_pPolicies->GetPolicyEntry(i);
+			if (pPolicy->GetTradeConnectionSeaYieldChanges(eTradeConnection, eYield) > 0)
+			{
+				iYield += pPolicy->GetTradeConnectionSeaYieldChanges(eTradeConnection, eYield);
+			}
+		}
+	}
+	return iYield;
+}
+/// How much of a Modifier for eYield are we getting from Land based eTradeConnection?
+int CvPlayerPolicies::GetTradeConnectionLandYieldModifier(TradeConnectionType eTradeConnection, YieldTypes eYield) const
+{
+	int iYield = 0;
+	for (int i = 0; i < m_pPolicies->GetNumPolicies(); i++)
+	{
+		// Do we have this policy?
+		if (m_pabHasPolicy[i] && !IsPolicyBlocked((PolicyTypes)i))
+		{
+			CvPolicyEntry* pPolicy = m_pPolicies->GetPolicyEntry(i);
+			if (pPolicy->GetTradeConnectionLandYieldModifier(eTradeConnection, eYield) > 0)
+			{
+				iYield += pPolicy->GetTradeConnectionLandYieldModifier(eTradeConnection, eYield);
+			}
+		}
+	}
+	return iYield;
+}
+/// How much of a Modifier for eYield are we getting from Sea based eTradeConnection?
+int CvPlayerPolicies::GetTradeConnectionSeaYieldModifier(TradeConnectionType eTradeConnection, YieldTypes eYield) const
+{
+	int iYield = 0;
+	for (int i = 0; i < m_pPolicies->GetNumPolicies(); i++)
+	{
+		// Do we have this policy?
+		if (m_pabHasPolicy[i] && !IsPolicyBlocked((PolicyTypes)i))
+		{
+			CvPolicyEntry* pPolicy = m_pPolicies->GetPolicyEntry(i);
+			if (pPolicy->GetTradeConnectionSeaYieldModifier(eTradeConnection, eYield) > 0)
+			{
+				iYield += pPolicy->GetTradeConnectionSeaYieldModifier(eTradeConnection, eYield);
+			}
+		}
+	}
+	return iYield;
+}
+#endif
 #if defined(FULL_YIELD_FROM_KILLS)
 /// How much of a Yield are we getting from killing?
 int CvPlayerPolicies::GetYieldFromKills(YieldTypes eYield) const
@@ -4378,6 +4696,27 @@ int CvPlayerPolicies::GetYieldFromKills(YieldTypes eYield) const
 	}
 
 	return iYield;
+}
+/// Per-row kill yield cap (highest Max among adopted policies; 0 = none)
+int CvPlayerPolicies::GetYieldFromKillsMax(YieldTypes eYield) const
+{
+	int iMax = 0;
+
+	for (int i = 0; i < m_pPolicies->GetNumPolicies(); i++)
+	{
+		if (m_pabHasPolicy[i] && !IsPolicyBlocked((PolicyTypes)i))
+		{
+			CvPolicyEntry* pPolicy = m_pPolicies->GetPolicyEntry(i);
+			if (pPolicy->GetYieldFromKills(eYield) > 0)
+			{
+				const int iPolicyMax = pPolicy->GetYieldFromKillsMax(eYield);
+				if (iPolicyMax > iMax)
+					iMax = iPolicyMax;
+			}
+		}
+	}
+
+	return iMax;
 }
 #endif
 #if defined(LEKMOD_v34)
@@ -4468,6 +4807,25 @@ int CvPlayerPolicies::GetMinorAllyYieldBonus(EraTypes eEra, YieldTypes eYield) c
 			if (pPolicy->GetMinorAllyYieldBonus(eEra, eYield) > 0)
 			{
 				iYield += pPolicy->GetMinorAllyYieldBonus(eEra, eYield);
+			}
+		}
+	}
+	return iYield;
+}
+#endif
+#if defined(LEKMOD_EXPERIMENTAL_CHANGES)
+int CvPlayerPolicies::GetWorldWonderYieldChange(YieldTypes eYield) const
+{
+	int iYield = 0;
+	for (int i = 0; i < m_pPolicies->GetNumPolicies(); i++)
+	{
+		// Do we have this policy?
+		if (m_pabHasPolicy[i] && !IsPolicyBlocked((PolicyTypes)i))
+		{
+			CvPolicyEntry* pPolicy = m_pPolicies->GetPolicyEntry(i);
+			if (pPolicy->GetWorldWonderYieldChange(eYield) > 0)
+			{
+				iYield += pPolicy->GetWorldWonderYieldChange(eYield);
 			}
 		}
 	}

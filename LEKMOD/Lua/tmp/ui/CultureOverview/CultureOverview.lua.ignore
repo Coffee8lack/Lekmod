@@ -1,3 +1,4 @@
+include( "InfoTooltipInclude" );
 local isUsingFlagsPlus = false
 
 local FlagsPlusModId = "e1ccf71a-f248-498c-8f30-5ca6d851079d"
@@ -773,7 +774,7 @@ function RefreshYourCulture()
     
 		cityData.Culture = city:GetJONSCulturePerTurn();
 		cityData.Tourism = city:GetBaseTourism();
-		cityData.TourismToolTip = city:GetTourismTooltip();
+		cityData.TourismToolTip = GetTourismTooltip(city);
 		cityData.GreatWorks = city:GetNumGreatWorks();
 		cityData.GreatWorksToolTip = city:GetTotalSlotsTooltip();
         

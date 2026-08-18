@@ -312,8 +312,16 @@ public:
 	int GetNumFreeUnitsByClass(int i) const;
 	int GetTourismByUnitClassCreated(int i) const;
 	int GetImprovementCultureChanges(int i) const;
+#if defined(TRADE_REFACTOR)
+	int GetMinorTradeRouteDomainYieldChanges(int i, int j) const;
+	int GetTradeConnectionLandYieldChanges(int i, int j) const;
+	int GetTradeConnectionSeaYieldChanges(int i, int j) const;
+	int GetTradeConnectionLandYieldModifier(int i, int j) const;
+	int GetTradeConnectionSeaYieldModifier(int i, int j) const;
+#endif
 #if defined(FULL_YIELD_FROM_KILLS)
 	int GetYieldFromKills(int i) const;
+	int GetYieldFromKillsMax(int i) const;
 #endif
 #if defined(LEKMOD_v34)
 	int GetPolicyResourceQuantity(int i) const;
@@ -338,6 +346,9 @@ public:
 #endif
 #if defined(LEKMOD_POLICY_GREATPERSON_IMPROVEMENT_ADJACENCY_YIELD)
 	int GetGreatPersonImprovementAdjacencyYieldBonus(int i, int j) const;
+#endif
+#if defined(LEKMOD_EXPERIMENTAL_CHANGES)
+	int GetWorldWonderYieldChange(int i) const;
 #endif
 	int GetFlavorValue(int i) const;
 
@@ -627,8 +638,16 @@ private:
 	int* m_paiBuildingClassHappiness;
 	int* m_paiFreeUnitClasses;
 	int* m_paiTourismOnUnitCreation;
+#if defined(TRADE_REFACTOR)
+	int** m_ppiMinorTradeRouteDomainYieldChanges;
+	int** m_ppiTradeConnectionLandYieldChanges;
+	int** m_ppiTradeConnectionSeaYieldChanges;
+	int** m_ppiTradeConnectionLandYieldModifiers;
+	int** m_ppiTradeConnectionSeaYieldModifiers;
+#endif
 #if defined(FULL_YIELD_FROM_KILLS)
 	int* m_paiYieldFromKills;
+	int* m_paiYieldFromKillsMax;
 #endif
 #if defined(LEKMOD_v34)
 	int* m_piPolicyResourceQuantity;
@@ -638,6 +657,9 @@ private:
 #if defined(LEKMOD_FIX_SCHOLASTICISM)
 	int** m_paiMinorFriendYieldBonus;
 	int** m_paiMinorAllyYieldBonus;
+#endif
+#if defined(LEKMOD_EXPERIMENTAL_CHANGES)
+	int* m_piWorldWonderYieldChanges;
 #endif
 //	bool* m_pabHurry;
 	bool* m_pabSpecialistValid;
@@ -717,7 +739,7 @@ public:
 	bool IsDelayWhenNoCulture() const;
 	bool IsDelayWhenNoCityStates() const;
 	bool IsDelayWhenNoScience() const;
-
+	CvString GetIconString() const { return m_szIconString; }
 	// Accessor Functions (Arrays)
 	int GetPolicyBranchDisables(int i) const;
 
@@ -734,6 +756,7 @@ private:
 	bool m_bDelayWhenNoCulture;
 	bool m_bDelayWhenNoCityStates;
 	bool m_bDelayWhenNoScience;
+	CvString m_szIconString;
 	// Arrays
 	int* m_piPolicyBranchDisables;
 };
@@ -964,8 +987,16 @@ public:
 #if defined(LEKMOD_NONCIV_BUILDINGCLASS_YIELD_CHANGE)
 	int GetBuildingClassHappiness(BuildingClassTypes eBuildingClass) const;
 #endif
+#if defined(TRADE_REFACTOR)
+	int GetMinorTradeRouteDomainYieldChanges(DomainTypes eDomain, YieldTypes eYield) const;
+	int GetTradeConnectionLandYieldChanges(TradeConnectionType eTradeConnection, YieldTypes eYield) const;
+	int GetTradeConnectionSeaYieldChanges(TradeConnectionType eTradeConnection, YieldTypes eYield) const;
+	int GetTradeConnectionLandYieldModifier(TradeConnectionType eTradeConnection, YieldTypes eYield) const;
+	int GetTradeConnectionSeaYieldModifier(TradeConnectionType eTradeConnection, YieldTypes eYield) const;
+#endif
 #if defined(FULL_YIELD_FROM_KILLS)
 	int GetYieldFromKills(YieldTypes eYield) const;
+	int GetYieldFromKillsMax(YieldTypes eYield) const;
 #endif
 #if defined(LEKMOD_v34)
 	int GetPolicyResourceQuantity(ResourceTypes eResource) const;
@@ -975,6 +1006,9 @@ public:
 #if defined(LEKMOD_FIX_SCHOLASTICISM)
 	int GetMinorFriendYieldBonus(EraTypes eEra, YieldTypes eYield) const;
 	int GetMinorAllyYieldBonus(EraTypes eEra, YieldTypes eYield) const;
+#endif
+#if defined(LEKMOD_EXPERIMENTAL_CHANGES)
+	int GetWorldWonderYieldChange(YieldTypes eYield) const;
 #endif
 
 	// Functions to give current player status with respect to policies

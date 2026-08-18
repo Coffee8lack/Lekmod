@@ -99,6 +99,9 @@ CvPromotionEntry::CvPromotionEntry():
 	m_bSubmergePromotion(false),
 #endif
 	m_iCommandType(NO_COMMAND),
+	m_iPillageChange(0),
+	m_iPillageXPChange(0),
+	m_iPillageHealChange(0),
 	m_iUpgradeDiscount(0),
 	m_iExperiencePercent(0),
 	m_iAdjacentMod(0),
@@ -120,6 +123,12 @@ CvPromotionEntry::CvPromotionEntry():
 	m_iReligiousStrengthLossRivalTerritory(0),
 	m_iTradeMissionInfluenceModifier(0),
 	m_iTradeMissionGoldModifier(0),
+#if defined(v35_TRAITIFY)
+	m_iNearbyWaterCombatModifier(0),
+	m_iAttackExtraMoves(0),
+	m_bKillRefreshMove(false),
+	m_bKillRefreshAttack(false),
+#endif
 	m_bCannotBeChosen(false),
 	m_bLostWithUpgrade(false),
 	m_bNotWithUpgrade(false),
@@ -197,6 +206,10 @@ CvPromotionEntry::CvPromotionEntry():
 	m_piUnitCombatModifierPercent(NULL),
 	m_piUnitClassModifierPercent(NULL),
 	m_piDomainModifierPercent(NULL),
+#if defined(LEKMOD_DOMAIN_PROMO_ATTACK_DEFENSE)
+	m_piDomainAttackPercent(NULL),
+	m_piDomainDefensePercent(NULL),
+#endif
 	m_piFeaturePassableTech(NULL),
 	m_piUnitClassAttackModifier(NULL),
 	m_piUnitClassDefenseModifier(NULL),
@@ -239,6 +252,10 @@ CvPromotionEntry::~CvPromotionEntry(void)
 	SAFE_DELETE_ARRAY(m_piUnitCombatModifierPercent);
 	SAFE_DELETE_ARRAY(m_piUnitClassModifierPercent);
 	SAFE_DELETE_ARRAY(m_piDomainModifierPercent);
+#if defined(LEKMOD_DOMAIN_PROMO_ATTACK_DEFENSE)
+	SAFE_DELETE_ARRAY(m_piDomainAttackPercent);
+	SAFE_DELETE_ARRAY(m_piDomainDefensePercent);
+#endif
 	SAFE_DELETE_ARRAY(m_piFeaturePassableTech);
 	SAFE_DELETE_ARRAY(m_piUnitClassAttackModifier);
 	SAFE_DELETE_ARRAY(m_piUnitClassDefenseModifier);
@@ -385,6 +402,9 @@ bool CvPromotionEntry::CacheResults(Database::Results& kResults, CvDatabaseUtili
 #if defined(LEKMOD_SUBMERGE_MISSION)
 	m_bSubmergePromotion = kResults.GetBool("SubmergePromotion");
 #endif
+	m_iPillageChange = kResults.GetInt("PillageChange");
+	m_iPillageXPChange = kResults.GetInt("PillageXPChange");
+	m_iPillageHealChange = kResults.GetInt("PillageHealChange");
 	m_iUpgradeDiscount = kResults.GetInt("UpgradeDiscount");
 	m_iExperiencePercent = kResults.GetInt("ExperiencePercent");
 	m_iAdjacentMod = kResults.GetInt("AdjacentMod");
@@ -406,6 +426,12 @@ bool CvPromotionEntry::CacheResults(Database::Results& kResults, CvDatabaseUtili
 	m_iReligiousStrengthLossRivalTerritory = kResults.GetInt("ReligiousStrengthLossRivalTerritory");
 	m_iTradeMissionInfluenceModifier = kResults.GetInt("TradeMissionInfluenceModifier");
 	m_iTradeMissionGoldModifier = kResults.GetInt("TradeMissionGoldModifier");
+#if defined(v35_TRAITIFY)
+	m_iNearbyWaterCombatModifier = kResults.GetInt("NearbyWaterCombatModifier");
+	m_iAttackExtraMoves = kResults.GetInt("AttackExtraMoves");
+	m_bKillRefreshMove = kResults.GetBool("KillRefreshMove");
+	m_bKillRefreshAttack = kResults.GetBool("KillRefreshAttack");
+#endif
 
 	//References
 	const char* szLayerAnimationPath = kResults.GetText("LayerAnimationPath");
@@ -494,7 +520,7 @@ bool CvPromotionEntry::CacheResults(Database::Results& kResults, CvDatabaseUtili
 		if (pResults == NULL)
 		{
 			const char* szSQL =
-				"SELECT Yields.ID, Yield, COALESCE(Max, -1) "
+				"SELECT Yields.ID, Yield, COALESCE(Max, 0) "
 				"FROM UnitPromotions_YieldFromKills "
 				"INNER JOIN Yields ON Yields.Type = YieldType "
 				"WHERE PromotionType = ?";
@@ -507,10 +533,10 @@ bool CvPromotionEntry::CacheResults(Database::Results& kResults, CvDatabaseUtili
 		{
 			const int iYieldID = pResults->GetInt(0);
 			const int iYield = pResults->GetInt(1);
-			const int iMaxValue = pResults->GetInt(2);
+			const int iMax = pResults->GetInt(2);
 
 			m_paiYieldFromKills[iYieldID] = iYield;
-			m_paiKillYieldCap[iYieldID] = iMaxValue;
+			m_paiKillYieldCap[iYieldID] = iMax;
 		}
 		pResults->Reset();
 	}
@@ -749,7 +775,38 @@ bool CvPromotionEntry::CacheResults(Database::Results& kResults, CvDatabaseUtili
 	//UnitPromotions_Domains
 	{
 		kUtility.InitializeArray(m_piDomainModifierPercent, NUM_DOMAIN_TYPES, 0);
+#if defined(LEKMOD_DOMAIN_PROMO_ATTACK_DEFENSE)
+		kUtility.InitializeArray(m_piDomainAttackPercent, NUM_DOMAIN_TYPES, 0);
+		kUtility.InitializeArray(m_piDomainDefensePercent, NUM_DOMAIN_TYPES, 0);
 
+		std::string sqlKey = "UnitPromotions_Domains_AttackDefense";
+		Database::Results* pResults = kUtility.GetResults(sqlKey);
+		if(pResults == NULL)
+		{
+			const char* szSQL = "select Domains.ID, Modifier, Attack, Defense from UnitPromotions_Domains inner join Domains on DomainType = Domains.Type where PromotionType = ?;";
+			pResults = kUtility.PrepareResults(sqlKey, szSQL);
+		}
+
+		CvAssert(pResults);
+		if(!pResults) return false;
+
+		pResults->Bind(1, szPromotionType);
+
+		while(pResults->Step())
+		{
+			const int iDomainID = pResults->GetInt(0);
+			CvAssert(iDomainID > -1 && iDomainID < NUM_DOMAIN_TYPES);
+
+			if (iDomainID > -1 && iDomainID < NUM_DOMAIN_TYPES)
+			{
+				m_piDomainModifierPercent[iDomainID] = pResults->GetInt("Modifier");
+				m_piDomainAttackPercent[iDomainID] = pResults->GetInt("Attack");
+				m_piDomainDefensePercent[iDomainID] = pResults->GetInt("Defense");
+			}
+		}
+
+		pResults->Reset();
+#else
 		std::string sqlKey = "m_piDomainModifierPercent";
 		Database::Results* pResults = kUtility.GetResults(sqlKey);
 		if(pResults == NULL)
@@ -774,6 +831,7 @@ bool CvPromotionEntry::CacheResults(Database::Results& kResults, CvDatabaseUtili
 		}
 
 		pResults->Reset();
+#endif
 	}
 
 	//UnitPromotions_UnitCombatMods
@@ -2039,6 +2097,52 @@ int CvPromotionEntry::GetDomainModifierPercent(int i) const
 	return -1;
 }
 
+#if defined(LEKMOD_DOMAIN_PROMO_ATTACK_DEFENSE)
+/// Percentage bonus when attacking a specific domain
+#ifdef AUI_WARNING_FIXES
+int CvPromotionEntry::GetDomainAttackPercent(uint i) const
+{
+	CvAssertMsg(i < NUM_DOMAIN_TYPES, "Index out of bounds");
+
+	if (i < NUM_DOMAIN_TYPES && m_piDomainAttackPercent)
+#else
+int CvPromotionEntry::GetDomainAttackPercent(int i) const
+{
+	CvAssertMsg(i < NUM_DOMAIN_TYPES, "Index out of bounds");
+	CvAssertMsg(i > -1, "Index out of bounds");
+
+	if(i > -1 && i < NUM_DOMAIN_TYPES && m_piDomainAttackPercent)
+#endif
+	{
+		return m_piDomainAttackPercent[i];
+	}
+
+	return -1;
+}
+
+/// Percentage bonus when defending against a specific domain
+#ifdef AUI_WARNING_FIXES
+int CvPromotionEntry::GetDomainDefensePercent(uint i) const
+{
+	CvAssertMsg(i < NUM_DOMAIN_TYPES, "Index out of bounds");
+
+	if (i < NUM_DOMAIN_TYPES && m_piDomainDefensePercent)
+#else
+int CvPromotionEntry::GetDomainDefensePercent(int i) const
+{
+	CvAssertMsg(i < NUM_DOMAIN_TYPES, "Index out of bounds");
+	CvAssertMsg(i > -1, "Index out of bounds");
+
+	if(i > -1 && i < NUM_DOMAIN_TYPES && m_piDomainDefensePercent)
+#endif
+	{
+		return m_piDomainDefensePercent[i];
+	}
+
+	return -1;
+}
+#endif
+
 /// Percentage bonus when attacking a specific unit class
 #ifdef AUI_WARNING_FIXES
 int CvPromotionEntry::GetUnitClassAttackModifier(uint i) const
@@ -2549,6 +2653,48 @@ int CvUnitPromotions::GetUnitClassDefenseMod(UnitClassTypes eUnitClass) const
 	}
 	return iSum;
 }
+
+#if defined(LEKMOD_DOMAIN_PROMO_ATTACK_DEFENSE)
+/// Advantage percent when attacking units of the specified domain
+int CvUnitPromotions::GetDomainAttackMod(DomainTypes eDomain) const
+{
+	int iSum = 0;
+#ifdef AUI_WARNING_FIXES
+	for (uint iLoop = 0; iLoop < GC.getNumPromotionInfos(); iLoop++)
+#else
+	for(int iLoop = 0; iLoop < GC.getNumPromotionInfos(); iLoop++)
+#endif
+	{
+		PromotionTypes ePromotion = (PromotionTypes)iLoop;
+		CvPromotionEntry* promotion = GC.getPromotionInfo(ePromotion);
+		if(promotion && HasPromotion(ePromotion))
+		{
+			iSum += promotion->GetDomainAttackPercent(eDomain);
+		}
+	}
+	return iSum;
+}
+
+/// Advantage percent when defending against units of the specified domain
+int CvUnitPromotions::GetDomainDefenseMod(DomainTypes eDomain) const
+{
+	int iSum = 0;
+#ifdef AUI_WARNING_FIXES
+	for (uint iLoop = 0; iLoop < GC.getNumPromotionInfos(); iLoop++)
+#else
+	for(int iLoop = 0; iLoop < GC.getNumPromotionInfos(); iLoop++)
+#endif
+	{
+		PromotionTypes ePromotion = (PromotionTypes)iLoop;
+		CvPromotionEntry* promotion = GC.getPromotionInfo(ePromotion);
+		if(promotion && HasPromotion(ePromotion))
+		{
+			iSum += promotion->GetDomainDefensePercent(eDomain);
+		}
+	}
+	return iSum;
+}
+#endif
 
 // Swap to a new promotion after a combat - returns new promotion we switched to
 PromotionTypes CvUnitPromotions::ChangePromotionAfterCombat(PromotionTypes eIndex)
